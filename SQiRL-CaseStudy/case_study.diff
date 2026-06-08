@@ -1,0 +1,2409 @@
+Binary files SQIRL-main/.DS_Store and Modified-SQiRL/.DS_Store differ
+Binary files SQIRL-main/RL_Agent/.DS_Store and Modified-SQiRL/RL_Agent/.DS_Store differ
+diff -ruN SQIRL-main/RL_Agent/Agents/DQN_RND_Agent/Syntax_Fixing_Agent.py Modified-SQiRL/RL_Agent/Agents/DQN_RND_Agent/Syntax_Fixing_Agent.py
+--- SQIRL-main/RL_Agent/Agents/DQN_RND_Agent/Syntax_Fixing_Agent.py	2023-06-27 03:04:00
++++ Modified-SQiRL/RL_Agent/Agents/DQN_RND_Agent/Syntax_Fixing_Agent.py	2026-01-22 20:09:50
+@@ -19,7 +19,7 @@
+         q_value_file = os.path.join(model_checkpoint_file,"Q_value.model")
+         q_value_file_mem = os.path.join(model_checkpoint_file,"Q_value.mem")
+         self.action_Q_value = DQN(State_Representation.size()+5,1,q_value_file,q_value_file_mem,"syntax_fixing_action",learning=learning,load=load)
+-        self.rdn = RDN(State_Representation.size()+5,1000,q_value_file,q_value_file_mem,"syntax_fixing_action")
++        self.rdn = RDN(State_Representation.size()+5,1000,"syntax_fixing_action")
+         self.epsilon = 0.6
+         self.decay_rate = 0.9999
+ 
+Binary files SQIRL-main/RL_Agent/pretrained_agents/.DS_Store and Modified-SQiRL/RL_Agent/pretrained_agents/.DS_Store differ
+diff -ruN SQIRL-main/SQLiMicrobenchmark/functions_external/sqli14_no_san.php Modified-SQiRL/SQLiMicrobenchmark/functions_external/sqli14_no_san.php
+--- SQIRL-main/SQLiMicrobenchmark/functions_external/sqli14_no_san.php	1970-01-01 01:00:00
++++ Modified-SQiRL/SQLiMicrobenchmark/functions_external/sqli14_no_san.php	2026-01-22 20:09:50
+@@ -0,0 +1,75 @@
++<?php
++    $id = $_GET['id'];
++    $difficulty = $_GET['difficulty'];
++    // database insert SQL code
++    $servername = "db";
++    $username = "server";
++    $password = "Qazwsxedcr12@";
++    $db = "sqliDB";
++
++    // Create connection
++    $conn = new mysqli($servername, $username, $password, $db);
++                
++    // Check connection
++    if ($conn->connect_error) {
++    die("Connection failed: " . $conn->connect_error);
++    }
++
++    echo "Search: ".$id."<br>";
++
++    $sql = "SELECT * FROM users WHERE id = '$id'";
++    
++
++    // insert in database 
++    $rs = mysqli_query($conn, $sql);
++    if($rs)
++    {   if(strpos($difficulty, 'feed') !== False)
++        {
++            echo "Query feedback: ";
++            $count = 0;
++            while($row = mysqli_fetch_assoc($rs) and $count < 10) {
++                echo "ID: " . $row["id"]. " - Name: " . $row["name"]. " - Pass: " . $row["pass"]. "<br>";
++                $count += 1;
++            }
++            if(mysqli_num_rows($rs) == 0){
++                echo "YES<br>";
++            }
++            echo 'Exception feedback: NO<br>';
++
++        }elseif(strpos($difficulty, 'exec') !== False){
++            echo "Query feedback: NO<br>";
++            echo 'Exception feedback: YES<br>';
++        }
++        else{
++            echo "Query feedback: NO<br>";
++            echo 'Exception feedback: NO<br>';
++        }
++        
++    }else{
++        if(strpos($difficulty, 'exec') !== False)
++        {
++            echo "Query feedback: NO<br>";
++            echo "Exception feedback: ";
++            if(mysqli_error($conn) !== Null){
++                    echo mysqli_error($conn);
++            }else{
++                echo "YES";
++            }
++        }
++        elseif(strpos($difficulty, 'feed') !== False)
++        {
++            echo "Query feedback: <br>";
++            echo 'Exception feedback: NO<br>';
++
++        }else{
++            echo "Query feedback: NO<br>";
++            echo 'Exception feedback: NO<br>';
++        }
++
++    }
++
++?>
++
++
++
++
+diff -ruN SQIRL-main/SQLiMicrobenchmark/functions_external/sqli15_no_san.php Modified-SQiRL/SQLiMicrobenchmark/functions_external/sqli15_no_san.php
+--- SQIRL-main/SQLiMicrobenchmark/functions_external/sqli15_no_san.php	1970-01-01 01:00:00
++++ Modified-SQiRL/SQLiMicrobenchmark/functions_external/sqli15_no_san.php	2026-01-22 20:09:50
+@@ -0,0 +1,76 @@
++<?php
++    $id = $_GET['id'];
++    $difficulty = $_GET['difficulty'];
++    // database insert SQL code
++    $servername = "db";
++    $username = "server";
++    $password = "Qazwsxedcr12@";
++    $db = "sqliDB";
++            
++
++
++    // Create connection
++    $conn = new mysqli($servername, $username, $password, $db);
++                
++    // Check connection
++    if ($conn->connect_error) {
++    die("Connection failed: " . $conn->connect_error);
++    }
++
++    echo "Search: ".$id."<br>";
++
++    $sql = "SELECT * FROM users WHERE (id = '$id')";
++    // echo "".$sql."<br>";
++
++    // insert in database 
++    $rs = mysqli_query($conn, $sql);
++    if($rs)
++    {   if(strpos($difficulty, 'feed') !== False)
++        {
++            echo "Query feedback: ";
++            $count = 0;
++            while($row = mysqli_fetch_assoc($rs) and $count < 10) {
++                echo "ID: " . $row["id"]. " - Name: " . $row["name"]. " - Pass: " . $row["pass"]. "<br>";
++                $count += 1;
++            }
++            if(mysqli_num_rows($rs) == 0){
++                echo "YES<br>";
++            }
++            echo 'Exception feedback: NO<br>';
++
++        }elseif(strpos($difficulty, 'exec') !== False){
++            echo "Query feedback: NO<br>";
++            echo 'Exception feedback: YES<br>';
++        }
++        else{
++            echo "Query feedback: NO<br>";
++            echo 'Exception feedback: NO<br>';
++        }
++        
++    }else{
++        if(strpos($difficulty, 'exec') !== False)
++        {
++            echo "Query feedback: NO<br>";
++            echo "Exception feedback: ";
++            if(mysqli_error($conn) !== Null){
++                    echo mysqli_error($conn);
++            }else{
++                echo "YES";
++            }
++        }
++        elseif(strpos($difficulty, 'feed') !== False)
++        {
++            echo "Query feedback: <br>";
++            echo 'Exception feedback: NO<br>';
++
++        }else{
++            echo "Query feedback: NO<br>";
++            echo 'Exception feedback: NO<br>';
++        }
++
++    }
++?>
++
++
++
++
+diff -ruN SQIRL-main/SQLiMicrobenchmark/functions_external/sqli16_no_san.php Modified-SQiRL/SQLiMicrobenchmark/functions_external/sqli16_no_san.php
+--- SQIRL-main/SQLiMicrobenchmark/functions_external/sqli16_no_san.php	1970-01-01 01:00:00
++++ Modified-SQiRL/SQLiMicrobenchmark/functions_external/sqli16_no_san.php	2026-01-22 20:09:50
+@@ -0,0 +1,74 @@
++<?php
++    $id = $_GET['id'];
++    $difficulty = $_GET['difficulty'];
++    // database insert SQL code
++    $servername = "db";
++    $username = "server";
++    $password = "Qazwsxedcr12@";
++    $db = "sqliDB";
++
++    // Create connection
++    $conn = new mysqli($servername, $username, $password, $db);
++                
++    // Check connection
++    if ($conn->connect_error) {
++    die("Connection failed: " . $conn->connect_error);
++    }
++
++    echo "Search: ".$id."<br>";
++
++    $sql = "SELECT * FROM users WHERE (id = '$id')";
++
++    // insert in database 
++    $rs = mysqli_query($conn, $sql);
++    if($rs)
++    {   if(strpos($difficulty, 'feed') !== False)
++        {
++            echo "Query feedback: ";
++            $count = 0;
++            while($row = mysqli_fetch_assoc($rs) and $count < 10) {
++                echo "ID: " . $row["id"]. " - Name: " . $row["name"]. " - Pass: " . $row["pass"]. "<br>";
++                $count += 1;
++            }
++            if(mysqli_num_rows($rs) == 0){
++                echo "YES<br>";
++            }
++            echo 'Exception feedback: NO<br>';
++
++        }elseif(strpos($difficulty, 'exec') !== False){
++            echo "Query feedback: NO<br>";
++            echo 'Exception feedback: YES<br>';
++        }
++        else{
++            echo "Query feedback: NO<br>";
++            echo 'Exception feedback: NO<br>';
++        }
++        
++    }else{
++        if(strpos($difficulty, 'exec') !== False)
++        {
++            echo "Query feedback: NO<br>";
++            echo "Exception feedback: ";
++            if(mysqli_error($conn) !== Null){
++                    echo mysqli_error($conn);
++            }else{
++                echo "YES";
++            }
++        }
++        elseif(strpos($difficulty, 'feed') !== False)
++        {
++            echo "Query feedback: <br>";
++            echo 'Exception feedback: NO<br>';
++
++        }else{
++            echo "Query feedback: NO<br>";
++            echo 'Exception feedback: NO<br>';
++        }
++
++    }
++
++?>
++
++
++
++
+diff -ruN SQIRL-main/SQLiMicrobenchmark/functions_external/sqli17_no_san.php Modified-SQiRL/SQLiMicrobenchmark/functions_external/sqli17_no_san.php
+--- SQIRL-main/SQLiMicrobenchmark/functions_external/sqli17_no_san.php	1970-01-01 01:00:00
++++ Modified-SQiRL/SQLiMicrobenchmark/functions_external/sqli17_no_san.php	2026-01-22 20:09:50
+@@ -0,0 +1,75 @@
++<?php
++    $id = $_GET['id'];
++    $difficulty = $_GET['difficulty'];
++    // database insert SQL code
++    $servername = "db";
++    $username = "server";
++    $password = "Qazwsxedcr12@";
++    $db = "sqliDB";
++
++
++    // Create connection
++    $conn = new mysqli($servername, $username, $password, $db);
++                
++    // Check connection
++    if ($conn->connect_error) {
++    die("Connection failed: " . $conn->connect_error);
++    }
++
++    echo "Search: ".$id."<br>";
++
++    $sql = "SELECT * FROM users WHERE (id = '$id')";
++
++
++    // insert in database 
++    $rs = mysqli_query($conn, $sql);
++    if($rs)
++    {   if(strpos($difficulty, 'feed') !== False)
++        {
++            echo "Query feedback: ";
++            $count = 0;
++            while($row = mysqli_fetch_assoc($rs) and $count < 10) {
++                echo "ID: " . $row["id"]. " - Name: " . $row["name"]. " - Pass: " . $row["pass"]. "<br>";
++                $count += 1;
++            }
++            if(mysqli_num_rows($rs) == 0){
++                echo "<br>";
++            }
++            echo 'Exception feedback: NO<br>';
++
++        }elseif(strpos($difficulty, 'exec') !== False){
++            echo "Query feedback: NO<br>";
++            echo 'Exception feedback: YES<br>';
++        }
++        else{
++            echo "Query feedback: NO<br>";
++            echo 'Exception feedback: NO<br>';
++        }
++        
++    }else{
++        if(strpos($difficulty, 'exec') !== False)
++        {
++            echo "Query feedback: NO<br>";
++            echo "Exception feedback: ";
++            if(mysqli_error($conn) !== Null){
++                    echo mysqli_error($conn);
++            }else{
++                echo "YES";
++            }
++        }
++        elseif(strpos($difficulty, 'feed') !== False)
++        {
++            echo "Query feedback: <br>";
++            echo 'Exception feedback: NO<br>';
++
++        }else{
++            echo "Query feedback: NO<br>";
++            echo 'Exception feedback: NO<br>';
++        }
++
++    }
++?>
++
++
++
++
+diff -ruN SQIRL-main/SQLiMicrobenchmark/functions_external/sqli18_no_san.php Modified-SQiRL/SQLiMicrobenchmark/functions_external/sqli18_no_san.php
+--- SQIRL-main/SQLiMicrobenchmark/functions_external/sqli18_no_san.php	1970-01-01 01:00:00
++++ Modified-SQiRL/SQLiMicrobenchmark/functions_external/sqli18_no_san.php	2026-01-22 20:09:50
+@@ -0,0 +1,80 @@
++<?php
++    $id = $_GET['id'];
++    $difficulty = $_GET['difficulty'];        
++    // database insert SQL code
++    $servername = "db";
++    $username = "server";
++    $password = "Qazwsxedcr12@";
++    $db = "sqliDB";
++
++
++    // Create connection
++
++    $conn = new mysqli($servername, $username, $password, $db);
++    if ($conn->connect_error) {
++        die("Connection failed: " . $conn->connect_error);
++    }
++    
++    // echo "".$sql."<br>";
++    echo "Search: ".$id."<br>";
++    // insert in database 
++    $sql = "SELECT * FROM users WHERE id LIKE '$id'";
++
++
++    // insert in database 
++    $rs = mysqli_query($conn, $sql);
++    $data = $rs;
++    if($data)
++    {   
++        
++        if(strpos($difficulty, 'feed') !== False)
++        {
++            echo "Query feedback: ";
++            $count = 0;
++            while($row = mysqli_fetch_assoc($rs) and $count < 10) {
++                echo "ID: " . $row["id"]. " - Name: " . $row["name"]. " - Pass: " . $row["pass"]. "<br>";
++                $count += 1;
++            }
++            if(mysqli_num_rows($rs) == 0){
++                echo "<br>";
++            }
++
++            echo 'Exception feedback: NO<br>';
++
++        }elseif(strpos($difficulty, 'exec') !== False){
++            echo "Query feedback: NO<br>";
++            echo 'Exception feedback: YES<br>';
++        }
++        else{
++            echo "Query feedback: NO<br>";
++            echo 'Exception feedback: NO<br>';
++        }
++        
++    }else{
++        if(strpos($difficulty, 'exec') !== False)
++        {
++            echo "Query feedback: NO<br>";
++            echo "Exception feedback: ";
++            if(mysqli_error($conn) !== Null){
++                    echo mysqli_error($conn);
++            }else{
++                echo "YES";
++            }
++        }
++        elseif(strpos($difficulty, 'feed') !== False)
++        {
++            echo "Query feedback: <br>";
++            echo 'Exception feedback: NO<br>';
++
++        }else{
++            echo "Query feedback: NO<br>";
++            echo 'Exception feedback: NO<br>';
++        }
++
++    }
++
++?>
++
++
++
++
+diff -ruN SQIRL-main/SQLiMicrobenchmark/functions_external/sqli19_no_san.php Modified-SQiRL/SQLiMicrobenchmark/functions_external/sqli19_no_san.php
+--- SQIRL-main/SQLiMicrobenchmark/functions_external/sqli19_no_san.php	1970-01-01 01:00:00
++++ Modified-SQiRL/SQLiMicrobenchmark/functions_external/sqli19_no_san.php	2026-01-22 20:09:50
+@@ -0,0 +1,72 @@
++<?php
++    $id = $_GET['id'];
++    $difficulty = $_GET['difficulty'];
++    // database insert SQL code
++    $servername = "db";
++    $username = "server";
++    $password = "Qazwsxedcr12@";
++    $db = "sqliDB";
++
++    // Create connection
++    $conn = new mysqli($servername, $username, $password, $db);
++                
++    // Check connection
++    if ($conn->connect_error) {
++    die("Connection failed: " . $conn->connect_error);
++    }
++    echo "Search: ".$id."<br>";
++
++    $sql = "SELECT * FROM users WHERE id = $id";
++    // insert in database 
++    $rs = mysqli_query($conn, $sql);
++        if($rs)
++    {   if(strpos($difficulty, 'feed') !== False)
++        {
++            echo "Query feedback: ";
++            $count = 0;
++            while($row = mysqli_fetch_assoc($rs) and $count < 10) {
++                echo "ID: " . $row["id"]. " - Name: " . $row["name"]. " - Pass: " . $row["pass"]. "<br>";
++                $count += 1;
++            }
++            if(mysqli_num_rows($rs) == 0){
++                echo "YES<br>";
++            }
++            echo 'Exception feedback: NO<br>';
++
++        }elseif(strpos($difficulty, 'exec') !== False){
++            echo "Query feedback: NO<br>";
++            echo 'Exception feedback: YES<br>';
++        }
++        else{
++            echo "Query feedback: NO<br>";
++            echo 'Exception feedback: NO<br>';
++        }
++        
++    }else{
++        if(strpos($difficulty, 'exec') !== False)
++        {
++            echo "Query feedback: NO<br>";
++            echo "Exception feedback: ";
++            if(mysqli_error($conn) !== Null){
++                    echo mysqli_error($conn);
++            }else{
++                echo "YES";
++            }
++        }
++        elseif(strpos($difficulty, 'feed') !== False)
++        {
++            echo "Query feedback: <br>";
++            echo 'Exception feedback: NO<br>';
++
++        }else{
++            echo "Query feedback: NO<br>";
++            echo 'Exception feedback: NO<br>';
++        }
++
++    }
++
++?>
++
++
++
++
+diff -ruN SQIRL-main/SQLiMicrobenchmark/functions_external/sqli20_no_san.php Modified-SQiRL/SQLiMicrobenchmark/functions_external/sqli20_no_san.php
+--- SQIRL-main/SQLiMicrobenchmark/functions_external/sqli20_no_san.php	1970-01-01 01:00:00
++++ Modified-SQiRL/SQLiMicrobenchmark/functions_external/sqli20_no_san.php	2026-01-22 20:09:50
+@@ -0,0 +1,74 @@
++<?php
++    $id = $_GET['id'];
++    $difficulty = $_GET['difficulty'];
++    // database insert SQL code
++    $servername = "db";
++    $username = "server";
++    $password = "Qazwsxedcr12@";
++    $db = "sqliDB";
++
++    // Create connection
++    $conn = new mysqli($servername, $username, $password, $db);
++                
++    // Check connection
++    if ($conn->connect_error) {
++    die("Connection failed: " . $conn->connect_error);
++    }
++
++    echo "Search: ".$id."<br>";
++
++    $sql = "SELECT MIN(name) from users GROUP BY id HAVING id=" .  $id;
++
++    // insert in database 
++    $rs = mysqli_query($conn, $sql);
++    if($rs)
++    {   if(strpos($difficulty, 'feed') !== False)
++        {
++            echo "Query feedback: ";
++            $count = 0;
++            while($row = mysqli_fetch_assoc($rs)and $count < 10) {
++                echo implode($row). "<br>";
++                $count += 1;
++            }
++            if(mysqli_num_rows($rs) == 0){
++                echo "<br>";
++            }
++            echo 'Exception feedback: NO<br>';
++
++        }elseif(strpos($difficulty, 'exec') !== False){
++            echo "Query feedback: NO<br>";
++            echo 'Exception feedback: YES<br>';
++        }
++        else{
++            echo "Query feedback: NO<br>";
++            echo 'Exception feedback: NO<br>';
++        }
++        
++    }else{
++        if(strpos($difficulty, 'exec') !== False)
++        {
++            echo "Query feedback: NO<br>";
++            echo "Exception feedback: ";
++            if(mysqli_error($conn) !== Null){
++                    echo mysqli_error($conn);
++            }else{
++                echo "YES";
++            }
++        }
++        elseif(strpos($difficulty, 'feed') !== False)
++        {
++            echo "Query feedback: <br>";
++            echo 'Exception feedback: NO<br>';
++
++        }else{
++            echo "Query feedback: NO<br>";
++            echo 'Exception feedback: NO<br>';
++        }
++
++    }
++
++?>
++
++
++
++
+diff -ruN SQIRL-main/SQLiMicrobenchmark/training_no_san.php Modified-SQiRL/SQLiMicrobenchmark/training_no_san.php
+--- SQIRL-main/SQLiMicrobenchmark/training_no_san.php	1970-01-01 01:00:00
++++ Modified-SQiRL/SQLiMicrobenchmark/training_no_san.php	2026-01-22 20:09:50
+@@ -0,0 +1,427 @@
++<!DOCTYPE html>
++<html lang="en">
++
++	<head>
++		<meta charset="utf-8">
++		<title>SQLI web server</title>
++	</head>
++
++	<body>
++        <pre>
++    (           (                             (         (                 (
++ )\ )   (    )\ )      (  (            (   )\ )      )\ )              )\ )
++(()/( ( )\  (()/( (    )\))(   ' (   ( )\ (()/( (   (()/( (   (   (   (()/(
++ /(_)))((_)  /(_)))\  ((_)()\ )  )\  )((_) /(_)))\   /(_)))\  )\  )\   /(_))
++(_)) ((_)_  (_)) ((_) _(())\_)()((_)((_)_ (_)) ((_) (_)) ((_)((_)((_) (_))
++/ __| / _ \ | |   (_) \ \((_)/ /| __|| _ )/ __|| __|| _ \\ \ / / | __|| _ \
++\__ \| (_) || |__ | |  \ \/\/ / | _| | _ \\__ \| _| |   / \ V /  | _| |   /
++|___/ \__\_\|____||_|   \_/\_/  |___||___/|___/|___||_|_\  \_/   |___||_|_\
++        </pre>
++        <h4>A deliberately vulnerable web application containing 20 different examples of SQLI.</h4>
++		<!-- <pre>
++                             .-"""""-.
++                            /\ /\ /\ /\
++                           (  _ ._. _  )
++                            '. V   V .'
++                             | >===< |
++                             | >===< |
++                           __| >===< |__
++                     _..-"X, | >===< | ,X"-.._
++                _.-"`Xx,   'X; >===< ;X'   ,xX`"-._
++            _.'`X.    'Xx.  'X,>===<,X'  .xX'    .X`._
++          .'X    `X,   'Xx   'X === X'   xX'   ,X'   X'.
++        .xXXXXx,   'X    'Xx  'X = X'  xX'    X'   ,xXXXXx.
++      .'       'X.   'X   'Xx  'X X'  xX'   X'   .X'       '.
++    .xXXXXXXXXXXXXX,  `Xx. 'Xx, .X. ,xX' .xX'  ,XXXXXXXXXXXXXx.
++   /               `X   XX  'XX//^\\XX'  XX   X`               \
++  /XXXXXXXXXXXXXXXXXXX   XX  'X\\_//X'  XX   XXXXXXXXXXXXXXXXXXX\
++ /                    X_.XX___XX'='XX___XX._X                    \
++ |XXXXXXXXXXXXXXXXXXX.'                     '.XXXXXXXXXXXXXXXXXXX|
++ |                  /                         \                  |
++ |XXXXXXXXXXXXXXXXX/   ..::::.       .::::..   \XXXXXXXXXXXXXXXXX|
++ |                /  .'       '     '       '.  \                |
++ /XXXXXXXXXXXXXXXX|  _.-"```"-.     .-"```"-._  |XXXXXXXXXXXXXXXX\
++|             .==.;   '._(')_.'\   /'._(')_.'   ;.==.             |
++|XXXXXXXXXXX.'.-, |            |   |            | ,-.'.XXXXXXXXXXX|
++|           |; (               |   |               ) ;|           |
++|XXXXXXXXXXX|;  `,            /    .\            ,'  ;|XXXXXXXXXXX|
++|           ;;'--            ( _   _ )            --';;           |
++|XXXXXXXXXXXX\' o             `"`-`"`             o '/XXXXXXXXXXXX|
++|             '-J-'|            : :            |'-L-'             |
++|XXXXXXXXXXXXXX(_)X\          __   __          /X(_)XXXXXXXXXXXXXX|
++|                   \      .-'  `'`  '-.      /                   |
++|XXXXXXXXXXXXXXXXXXXX\    `-:""""""""":-`    /XXXXXXXXXXXXXXXXXXXX|
++|                     \      `-.....-'      /                     |
++|XXXXXXXXXXXXXXXXXXXXXX'.                 .'XXXXXXXXXXXXXXXXXXXXXX|
++ \                       `;-._       _.-;`                       /
++  \XXXXXXXXXXXXXXXXXXXXXXX|   `}}}}}`   |XXXXXXXXXXXXXXXXXXXXXXX/
++   '.                     |    {{{{{    |                     .'
++     '.XXXJGSXXXXXXXXXXXXX|     }}}     |XXXXXXXXXXXXXXXXXXX.'
++       \                  |      }      |                  /
++        'XXXXXXXXXXXXXXXXX|      }      |XXXXXXXXXXXXXXXXX'
++         \                |             |                /
++          'XXXXXXXXXXXXXXX|             |XXXXXXXXXXXXXXX'
++           \              |             |              /
++            \XXXXXXXXXXXXX|             |XXXXXXXXXXXXX/
++            |             |             |             |
++            |XXXXXXXXXXXXX|             |XXXXXXXXXXXXX|
++            |             |             |             |
++            |XXXXXXXXXXXXX|             |XXXXXXXXXXXXX|
++            \             |             |             /
++             'XXXXXXXXXXXX|             |XXXXXXXXXXXX'
++               `-.________/             \________.-`
++</pre> -->
++		<?php
++
++ $servername = "db";
++            $username = "server";
++            $password = "Qazwsxedcr12@";
++            $db = "sqliDB";
++
++            // Create connection
++            $conn = new mysqli($servername, $username, $password, $db);
++
++            // Check connection
++            if ($conn->connect_error) {
++            die("Connection failed: " . $conn->connect_error);
++            }
++        ?>
++		<!--  -->
++		<!--  -->
++    <pre>
++.-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-
++/ / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \  / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \
++`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'  `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'
++</pre>
++<h2>SQL injection training page.</h2>
++<h3>Tasks 1 - 13. These input fields include a variety of different SQL statements to exploit, without any sanitation to user inputs. </h3>
++<pre>
++.-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-
++/ / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \  / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ 
++`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'  `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'
++</pre>
++<h2> Task 1</h2>
++
++
++ <form action="functions_external/sqli1.php" method="get">
++  ID <input type="text" name="id"></br></br>
++              <input type="hidden" name="difficulty" id="difficulty" value="None">
++
++              
++  Submit Request: <button type="submit">Go</button>
++</form>
++
++    <pre>
++    .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-
++ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \
++`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'
++    </pre>
++
++
++
++    <h2> Task 2</h2>
++
++
++        
++        <form action="functions_external/sqli2.php" method="get">
++            Name <input type="text" name="name"></br></br>
++            <input type="hidden" name="difficulty" id="difficulty" value="None">
++            
++            Submit Request: <button type="submit">Go</button>
++        </form>
++    <pre>
++    .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-
++ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \
++`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'
++    </pre>
++    <h2> Task 3</h2>
++
++    <form action="functions_external/sqli3.php" method="post">
++            Password <input type="text" name="pass"></br></br>
++              <input type="hidden" name="difficulty" id="difficulty" value="None">
++
++            
++            Submit Request: <button type="submit">Update</button>
++        </form> 
++    <pre>
++    .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-
++ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \
++`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'
++    </pre>
++    <h2> Task 4</h2>
++
++
++         <form action="functions_external/sqli4.php" method="post">
++            Name <input type="text" name="name"></br></br>
++            
++            <input type="hidden" name="difficulty" id="difficulty" value="None">
++            
++            Submit Request: <button type="submit">Create</button>
++        </form>
++    <pre>
++    .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-
++ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \
++`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'
++  </pre>
++  <h2> Task 5</h2>
++
++
++
++ <form action="functions_external/sqli5.php" method="get">
++  Name <input type="text" name="name">
++</br></br>
++<input type="hidden" name="difficulty" id="difficulty" value="None">
++        
++  Submit Request: <button type="submit">Go</button>
++</form>
++
++
++<pre>
++    .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-
++ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \
++`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'
++  </pre>
++  <h2> Task 6</h2>
++
++
++
++ <form action="functions_external/sqli6.php" method="get">
++  Name <input type="text" name="name">
++</br></br>
++<input type="hidden" name="difficulty" id="difficulty" value="None">
++            
++  Submit Request: <button type="submit">Go</button>
++</form>
++
++  <pre>
++    .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-
++ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \
++`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'
++  </pre>
++  <h2> Task 7 </h2>
++
++
++  
++   <form action="functions_external/sqli7.php" method="get">
++    Name <input type="text" name="name">
++</br></br>
++<input type="hidden" name="difficulty" id="difficulty" value="None">
++            
++    Submit Request: <button type="submit">Go</button>
++  </form>
++    <pre>
++    .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-
++ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \
++`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'
++    </pre>
++    <h2> Task 8</h2>
++
++
++
++ <form action="functions_external/sqli8.php" method="get">
++  Name <input type="text" name="name">
++</br></br>
++<input type="hidden" name="difficulty" id="difficulty" value="None">
++            
++  Submit Request: <button type="submit">Go</button>
++</form>
++    <pre>
++    .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-
++ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \
++`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'
++    </pre>
++  <h2> Task 9</h2>
++
++
++  
++   <form action="functions_external/sqli9.php" method="get">
++    Name <input type="text" name="name">
++</br></br>
++<input type="hidden" name="difficulty" id="difficulty" value="None">
++            
++    Submit Request: <button type="submit">Go</button>
++  </form>
++  <pre>
++    .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-
++ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \
++`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'
++  </pre>
++  <h2> Task 10</h2>
++
++
++  
++   <form action="functions_external/sqli10.php" method="get">
++    Name <input type="text" name="name">
++</br></br>
++<input type="hidden" name="difficulty" id="difficulty" value="None">
++            
++    Submit Request: <button type="submit">Go</button>
++  </form>
++    <pre>
++    .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-
++ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \
++`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'
++    </pre>
++    <h2> Task 11 </h2>
++
++        
++         <form action="functions_external/sqli11.php" method="get">
++            ID <input type="text" name="name"></br></br>
++            <input type="hidden" name="difficulty" id="difficulty" value="None">
++            
++            Submit Request: <button type="submit">Go</button>
++        </form>
++    <pre>
++    .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-
++ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \
++`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'
++    </pre>
++    <h2> Task 12 </h2>
++
++
++        
++         <form action="functions_external/sqli12.php" method="get">
++            ID <input type="text" name="name">
++</br></br>
++<input type="hidden" name="difficulty" id="difficulty" value="None">
++            
++            Submit Request: <button type="submit">Go</button>
++        </form>
++    <pre>
++    .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-
++ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \
++`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'
++    </pre>
++
++    <h2> Task 13 </h2>
++
++
++         <form action="functions_external/sqli13.php" method="get">
++            
++</br>            Name2 <input type="text" name="name2">
++
++</br></br>
++<input type="hidden" name="difficulty" id="difficulty" value="None">
++            
++            Submit Request: <button type="submit">Go</button>
++        </form>  
++    <pre>
++    .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-
++ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \
++`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'
++    </pre>
++        <h1>Test Sanitisation</h2>
++    <h3>Tasks 14 - 20. These input fields include a variety of different SQL statements to exploit, with sanitation to user inputs. </h3>
++
++    <h2> Task 14 </h2>
++
++
++        
++         <form action="functions_external/sqli14_no_san.php" method="get">
++            ID <input type="text" name="id">
++</br></br>
++<input type="hidden" name="difficulty" id="difficulty" value="None">
++            
++            Submit Request: <button type="submit">Go</button>
++        </form>
++    <pre>
++    .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-
++ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \
++`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'
++    </pre>
++    <h2> Task 15 </h2>
++
++
++        
++         <form action="functions_external/sqli15_no_san.php" method="get">
++            Name <input type="text" name="id">
++</br></br>
++<input type="hidden" name="difficulty" id="difficulty" value="None">
++            
++            Submit Request: <button type="submit">Go</button>
++        </form>
++            <pre>
++    .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-
++ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \
++`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'
++    </pre>
++        <h2> Task 16 </h2>
++
++
++        
++         <form action="functions_external/sqli16_no_san.php" method="get">
++            Name <input type="text" name="id">
++</br></br>
++<input type="hidden" name="difficulty" id="difficulty" value="None">
++            
++            Submit Request: <button type="submit">Go</button>
++        </form>
++    <pre>
++    .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-
++ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \
++`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'
++    </pre>
++        <h2> Task 17 </h2>
++
++
++         <form action="functions_external/sqli17_no_san.php" method="get">
++            Name <input type="text" name="id">
++</br></br>
++<input type="hidden" name="difficulty" id="difficulty" value="None">
++            
++            Submit Request: <button type="submit">Go</button>
++        </form>
++    <pre>
++    .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-
++ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \
++`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'
++    </pre>
++        <h2> Task 18 </h2>
++
++
++        
++         <form action="functions_external/sqli18_no_san.php" method="get">
++            Name <input type="text" name="id">
++</br></br>
++<input type="hidden" name="difficulty" id="difficulty" value="None">
++            
++            Submit Request: <button type="submit">Go</button>
++        </form>
++    <pre>
++    .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-
++ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \
++`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'
++    </pre>
++        <h2> Task 19 </h2>
++
++         <form action="functions_external/sqli19_no_san.php" method="get">
++            ID <input type="text" name="id">
++</br></br>
++<input type="hidden" name="difficulty" id="difficulty" value="None">
++            
++            Submit Request: <button type="submit">Go</button>
++        </form>
++           <pre>
++    .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-
++ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \
++`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'
++    </pre>
++
++        <h2> Task 20</h2>
++
++
++        
++         <form action="functions_external/sqli20_no_san.php" method="get">
++
++</br>            ID <input type="text" name="id">
++</br></br>
++<input type="hidden" name="difficulty" id="difficulty" value="None">
++            
++            Submit Request: <button type="submit">Go</button>
++        </form>    <pre>
++    .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-.   .-.-
++ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \ \ / / \
++`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'   `-`-'
++    </pre>
++    	</body>
++</html>
+diff -ruN SQIRL-main/analyze_results.py Modified-SQiRL/analyze_results.py
+--- SQIRL-main/analyze_results.py	1970-01-01 01:00:00
++++ Modified-SQiRL/analyze_results.py	2026-01-22 20:09:50
+@@ -0,0 +1,885 @@
++#!/usr/bin/env python3
++"""
++Script to analyze SQIRL test results from result_stats_1.stats files.
++Calculates mean and standard deviation of win rate and episode length
++per input endpoint, separated by training type (sanitized vs non-sanitized).
++
++Outputs:
++- Terminal table with color coding
++- CSV file
++- LaTeX table
++"""
++
++import os
++import re
++import sys
++from collections import defaultdict
++from pathlib import Path
++import numpy as np
++import pandas as pd
++from scipy import stats as scipy_stats
++
++# ANSI color codes for terminal output
++class Colors:
++    HEADER = '\033[95m'
++    BLUE = '\033[94m'
++    CYAN = '\033[96m'
++    GREEN = '\033[92m'
++    YELLOW = '\033[93m'
++    RED = '\033[91m'
++    BOLD = '\033[1m'
++    UNDERLINE = '\033[4m'
++    END = '\033[0m'
++
++
++def extract_endpoint(url):
++    """Extract the endpoint name from a URL (e.g., sqli7.php from full URL)"""
++    match = re.search(r'(sqli\d+\.php)', url)
++    if match:
++        return match.group(1)
++    return url.split('/')[-1]
++
++
++def parse_result_stats(filepath):
++    """
++    Parse a result_stats_1.stats file and extract per-input statistics.
++    
++    Returns a dict: {endpoint: {'won': bool, 'episodes': int, 'timestamps': list}}
++    """
++    results = {}
++    current_input = None
++    current_endpoint = None
++    episode_count = 0
++    timestamps_list = []
++    
++    with open(filepath, 'r') as f:
++        lines = f.readlines()
++    
++    for line in lines:
++        line = line.strip()
++        
++        # Check for starting/changing input
++        start_match = re.match(r'\[!\] Starting to input (\w+),(.*)', line)
++        change_match = re.match(r'\[!\] Changing to input (\w+),(.*)', line)
++        
++        if start_match or change_match:
++            # Save previous input results if any
++            if current_endpoint and episode_count > 0:
++                if current_endpoint not in results:
++                    results[current_endpoint] = {
++                        'won': False,
++                        'episodes': episode_count,
++                        'timestamps': timestamps_list.copy()
++                    }
++            
++            # Start tracking new input
++            match = start_match or change_match
++            param = match.group(1)
++            url = match.group(2)
++            current_endpoint = extract_endpoint(url)
++            current_input = f"{param},{current_endpoint}"
++            episode_count = 0
++            timestamps_list = []
++            continue
++        
++        # Check for episode results
++        ep_match = re.match(r'ep (\d+): current game (lost|wins) (\d+) with (\d+) timestamps', line)
++        if ep_match:
++            episode_num = int(ep_match.group(1))
++            result = ep_match.group(2)
++            count = int(ep_match.group(3))
++            timestamps = int(ep_match.group(4))
++            episode_count = count  # This is the cumulative count for current input
++            timestamps_list.append(timestamps)
++            continue
++        
++        # Check for win/loss criteria
++        if '[!] reached win criteria' in line:
++            if current_endpoint:
++                results[current_endpoint] = {
++                    'won': True,
++                    'episodes': episode_count,
++                    'timestamps': timestamps_list.copy()
++                }
++                # Reset for next input
++                episode_count = 0
++                timestamps_list = []
++            continue
++        
++        if '[!] reached loss criteria' in line:
++            if current_endpoint:
++                results[current_endpoint] = {
++                    'won': False,
++                    'episodes': episode_count,
++                    'timestamps': timestamps_list.copy()
++                }
++                # Reset for next input
++                episode_count = 0
++                timestamps_list = []
++            continue
++    
++    return results
++
++
++def collect_all_results(test_results_dir):
++    """
++    Collect results from all test directories, separated by training type.
++    
++    Returns: {
++        'non_san': {endpoint: [{'won': bool, 'episodes': int, 'timestamps': list}, ...]},
++        'sanitized': {endpoint: [...]}
++    }
++    """
++    all_results = {
++        'non_san': defaultdict(list),
++        'sanitized': defaultdict(list)
++    }
++    
++    test_dir = Path(test_results_dir)
++    
++    for subdir in sorted(test_dir.iterdir()):
++        if not subdir.is_dir():
++            continue
++        
++        # Determine training type from directory name
++        dirname = subdir.name
++        if 'TEST_non_san_' in dirname:
++            training_type = 'non_san'
++        elif 'TEST_sanitized_' in dirname:
++            training_type = 'sanitized'
++        else:
++            continue
++        
++        # Find and parse result_stats file
++        result_file = subdir / 'result_stats_1.stats'
++        if not result_file.exists():
++            print(f"Warning: No result_stats_1.stats in {subdir.name}")
++            continue
++        
++        try:
++            results = parse_result_stats(result_file)
++            for endpoint, data in results.items():
++                all_results[training_type][endpoint].append(data)
++        except Exception as e:
++            print(f"Error parsing {result_file}: {e}")
++    
++    return all_results
++
++
++def calculate_confidence_interval(data, confidence=0.95):
++    """
++    Calculate the 95% confidence interval for the mean.
++    
++    Returns: (mean, ci_lower, ci_upper, margin_of_error)
++    """
++    __import__("IPython").embed()   
++    n = len(data)
++    if n < 2:
++        mean = np.mean(data) if n > 0 else 0.0
++        return mean, mean, mean, 0.0
++    
++    mean = np.mean(data)
++    std_err = scipy_stats.sem(data)  # Standard error of the mean
++    
++    # Use t-distribution for small samples
++    t_value = scipy_stats.t.ppf((1 + confidence) / 2, n - 1)
++    margin_of_error = t_value * std_err
++    
++    ci_lower = mean - margin_of_error
++    ci_upper = mean + margin_of_error
++    
++    return mean, ci_lower, ci_upper, margin_of_error
++
++
++def calculate_statistics(results_list, confidence=0.95):
++    """
++    Calculate mean and 95% confidence interval for win rate and episode length.
++    
++    Returns: {
++        'win_rate_mean': float,
++        'win_rate_ci': float,  # margin of error for 95% CI
++        'win_rate_ci_lower': float,
++        'win_rate_ci_upper': float,
++        'episodes_mean': float,
++        'episodes_ci': float,  # margin of error for 95% CI
++        'episodes_ci_lower': float,
++        'episodes_ci_upper': float,
++        'count': int
++    }
++    """
++    if not results_list:
++        return {
++            'win_rate_mean': 0.0,
++            'win_rate_ci': 0.0,
++            'win_rate_ci_lower': 0.0,
++            'win_rate_ci_upper': 0.0,
++            'episodes_mean': 0.0,
++            'episodes_ci': 0.0,
++            'episodes_ci_lower': 0.0,
++            'episodes_ci_upper': 0.0,
++            'count': 0
++        }
++    
++    wins = [1 if r['won'] else 0 for r in results_list]
++    episodes = [r['episodes'] for r in results_list]
++    
++    # Calculate confidence intervals
++    win_mean, win_ci_lower, win_ci_upper, win_ci = calculate_confidence_interval(wins, confidence)
++    ep_mean, ep_ci_lower, ep_ci_upper, ep_ci = calculate_confidence_interval(episodes, confidence)
++    
++    return {
++        'win_rate_mean': win_mean * 100,  # Convert to percentage
++        'win_rate_ci': win_ci * 100,
++        'win_rate_ci_lower': win_ci_lower * 100,
++        'win_rate_ci_upper': win_ci_upper * 100,
++        'episodes_mean': ep_mean,
++        'episodes_ci': ep_ci,
++        'episodes_ci_lower': ep_ci_lower,
++        'episodes_ci_upper': ep_ci_upper,
++        'count': len(results_list)
++    }
++
++
++def print_results_table(all_results):
++    """Print a formatted table of results."""
++    
++    # Collect all unique endpoints
++    all_endpoints = set()
++    for training_type in all_results:
++        all_endpoints.update(all_results[training_type].keys())
++    
++    # Sort endpoints by number
++    def endpoint_sort_key(ep):
++        match = re.search(r'sqli(\d+)', ep)
++        return int(match.group(1)) if match else 999
++    
++    sorted_endpoints = sorted(all_endpoints, key=endpoint_sort_key)
++    
++    # Calculate statistics for each endpoint and training type
++    stats = {
++        'non_san': {},
++        'sanitized': {}
++    }
++    
++    for training_type in ['non_san', 'sanitized']:
++        for endpoint in sorted_endpoints:
++            results_list = all_results[training_type].get(endpoint, [])
++            stats[training_type][endpoint] = calculate_statistics(results_list)
++    
++    # Define sanitisation subset endpoints
++    sanitisation_endpoints = ['sqli14.php', 'sqli15.php', 'sqli16.php', 'sqli17.php', 
++                              'sqli18.php', 'sqli26.php', 'sqli27.php', 'sqli28.php', 'sqli29.php']
++    
++    # Calculate totals
++    totals = {}
++    sanitisation_totals = {}
++    
++    for training_type in ['non_san', 'sanitized']:
++        all_wins = []
++        all_episodes = []
++        san_wins = []
++        san_episodes = []
++        
++        for endpoint in sorted_endpoints:
++            results_list = all_results[training_type].get(endpoint, [])
++            for r in results_list:
++                all_wins.append(1 if r['won'] else 0)
++                all_episodes.append(r['episodes'])
++                
++                # Check if this endpoint is in the sanitisation subset
++                if endpoint in sanitisation_endpoints:
++                    san_wins.append(1 if r['won'] else 0)
++                    san_episodes.append(r['episodes'])
++        
++        if all_wins:
++            win_mean, win_ci_lower, win_ci_upper, win_ci = calculate_confidence_interval(all_wins)
++            ep_mean, ep_ci_lower, ep_ci_upper, ep_ci = calculate_confidence_interval(all_episodes)
++            totals[training_type] = {
++                'win_rate_mean': win_mean * 100,
++                'win_rate_ci': win_ci * 100,
++                'episodes_mean': ep_mean,
++                'episodes_ci': ep_ci,
++                'count': len(all_wins)
++            }
++        else:
++            totals[training_type] = {
++                'win_rate_mean': 0.0,
++                'win_rate_ci': 0.0,
++                'episodes_mean': 0.0,
++                'episodes_ci': 0.0,
++                'count': 0
++            }
++        
++        # Calculate sanitisation subset totals
++        if san_wins:
++            san_win_mean, _, _, san_win_ci = calculate_confidence_interval(san_wins)
++            san_ep_mean, _, _, san_ep_ci = calculate_confidence_interval(san_episodes)
++            sanitisation_totals[training_type] = {
++                'win_rate_mean': san_win_mean * 100,
++                'win_rate_ci': san_win_ci * 100,
++                'episodes_mean': san_ep_mean,
++                'episodes_ci': san_ep_ci,
++                'count': len(san_wins)
++            }
++        else:
++            sanitisation_totals[training_type] = {
++                'win_rate_mean': 0.0,
++                'win_rate_ci': 0.0,
++                'episodes_mean': 0.0,
++                'episodes_ci': 0.0,
++                'count': 0
++            }
++    
++    # Print header
++    print()
++    print(f"{Colors.BOLD}{Colors.CYAN}=" * 120 + Colors.END)
++    print(f"{Colors.BOLD}{Colors.CYAN}SQIRL Test Results Analysis - Comparison by Training Type (95% CI){Colors.END}")
++    print(f"{Colors.BOLD}{Colors.CYAN}=" * 120 + Colors.END)
++    print()
++    
++    # Print table header
++    header = f"{'Endpoint':<15} | {'Training Type':<12} | {'Win Rate (%) 95% CI':^22} | {'Episodes 95% CI':^22} | {'N':>5}"
++    subheader = f"{'':<15} | {'':<12} | {'[Lower':>10}, {'Upper]':<10} | {'[Lower':>10}, {'Upper]':<10} | {'':<5}"
++    
++    print(f"{Colors.BOLD}{header}{Colors.END}")
++    print(f"{Colors.BOLD}{subheader}{Colors.END}")
++    print("-" * 120)
++    
++    # Print per-endpoint results
++    for endpoint in sorted_endpoints:
++        for i, training_type in enumerate(['non_san', 'sanitized']):
++            s = stats[training_type].get(endpoint, calculate_statistics([]))
++            
++            if i == 0:
++                ep_name = endpoint
++            else:
++                ep_name = ""
++            
++            # Color code based on training type
++            type_color = Colors.YELLOW if training_type == 'non_san' else Colors.GREEN
++            
++            # Color code win rate
++            if s['win_rate_mean'] >= 80:
++                win_color = Colors.GREEN
++            elif s['win_rate_mean'] >= 50:
++                win_color = Colors.YELLOW
++            else:
++                win_color = Colors.RED
++            
++            type_display = "Non-Sanitized" if training_type == 'non_san' else "Sanitized"
++            
++            # Format as [lower, upper]
++            win_ci_str = f"[{s['win_rate_ci_lower']:>5.1f}, {s['win_rate_ci_upper']:<5.1f}]"
++            ep_ci_str = f"[{s['episodes_ci_lower']:>5.2f}, {s['episodes_ci_upper']:<5.2f}]"
++            
++            print(f"{ep_name:<15} | {type_color}{type_display:<12}{Colors.END} | "
++                  f"{win_color}{win_ci_str:^22}{Colors.END} | "
++                  f"{ep_ci_str:^22} | "
++                  f"{s['count']:>5}")
++        
++        print("-" * 120)
++    
++    # Print sanitisation subset totals
++    print()
++    print(f"{Colors.BOLD}{Colors.CYAN}SANITISATION SUBSET (SQLi-14,15,16,17,18,26,27,28,29){Colors.END}")
++    print("-" * 120)
++    
++    for training_type in ['non_san', 'sanitized']:
++        t = sanitisation_totals[training_type]
++        type_color = Colors.YELLOW if training_type == 'non_san' else Colors.GREEN
++        
++        if t['win_rate_mean'] >= 80:
++            win_color = Colors.GREEN
++        elif t['win_rate_mean'] >= 50:
++            win_color = Colors.YELLOW
++        else:
++            win_color = Colors.RED
++        
++        type_display = "Non-Sanitized" if training_type == 'non_san' else "Sanitized"
++        
++        # Calculate bounds from mean and CI
++        win_lower = t['win_rate_mean'] - t['win_rate_ci']
++        win_upper = t['win_rate_mean'] + t['win_rate_ci']
++        ep_lower = t['episodes_mean'] - t['episodes_ci']
++        ep_upper = t['episodes_mean'] + t['episodes_ci']
++        
++        win_ci_str = f"[{win_lower:>5.1f}, {win_upper:<5.1f}]"
++        ep_ci_str = f"[{ep_lower:>5.2f}, {ep_upper:<5.2f}]"
++        
++        print(f"{'SANITISATION':<15} | {type_color}{type_display:<12}{Colors.END} | "
++              f"{win_color}{win_ci_str:^22}{Colors.END} | "
++              f"{ep_ci_str:^22} | "
++              f"{t['count']:>5}")
++    
++    # Print totals
++    print()
++    print(f"{Colors.BOLD}{Colors.CYAN}TOTALS (Aggregated Across All Endpoints){Colors.END}")
++    print("-" * 120)
++    
++    for training_type in ['non_san', 'sanitized']:
++        t = totals[training_type]
++        type_color = Colors.YELLOW if training_type == 'non_san' else Colors.GREEN
++        
++        if t['win_rate_mean'] >= 80:
++            win_color = Colors.GREEN
++        elif t['win_rate_mean'] >= 50:
++            win_color = Colors.YELLOW
++        else:
++            win_color = Colors.RED
++        
++        type_display = "Non-Sanitized" if training_type == 'non_san' else "Sanitized"
++        
++        # Calculate bounds from mean and CI
++        win_lower = t['win_rate_mean'] - t['win_rate_ci']
++        win_upper = t['win_rate_mean'] + t['win_rate_ci']
++        ep_lower = t['episodes_mean'] - t['episodes_ci']
++        ep_upper = t['episodes_mean'] + t['episodes_ci']
++        
++        win_ci_str = f"[{win_lower:>5.1f}, {win_upper:<5.1f}]"
++        ep_ci_str = f"[{ep_lower:>5.2f}, {ep_upper:<5.2f}]"
++        
++        print(f"{'TOTAL':<15} | {type_color}{type_display:<12}{Colors.END} | "
++              f"{win_color}{win_ci_str:^22}{Colors.END} | "
++              f"{ep_ci_str:^22} | "
++              f"{t['count']:>5}")
++    
++    print("=" * 120)
++    print()
++    
++    # Print summary statistics
++    print(f"{Colors.BOLD}Summary:{Colors.END}")
++    print(f"  Non-Sanitized trained agents: {totals['non_san']['count']} total observations across {len([e for e in sorted_endpoints if all_results['non_san'].get(e)])} endpoints")
++    print(f"  Sanitized trained agents:     {totals['sanitized']['count']} total observations across {len([e for e in sorted_endpoints if all_results['sanitized'].get(e)])} endpoints")
++    print()
++    
++    # Count number of test runs
++    non_san_runs = len(set(len(all_results['non_san'].get(ep, [])) for ep in sorted_endpoints if all_results['non_san'].get(ep)))
++    san_runs = len(set(len(all_results['sanitized'].get(ep, [])) for ep in sorted_endpoints if all_results['sanitized'].get(ep)))
++    
++    non_san_count = max(len(all_results['non_san'].get(ep, [])) for ep in sorted_endpoints) if sorted_endpoints else 0
++    san_count = max(len(all_results['sanitized'].get(ep, [])) for ep in sorted_endpoints) if sorted_endpoints else 0
++    
++    print(f"  Number of Non-Sanitized agent test runs: ~{non_san_count}")
++    print(f"  Number of Sanitized agent test runs:     ~{san_count}")
++    print()
++
++
++def create_results_dataframe(all_results):
++    """
++    Create a pandas DataFrame with all results using 95% confidence intervals.
++    
++    Returns a DataFrame with columns for each training type's statistics.
++    """
++    # Collect all unique endpoints
++    all_endpoints = set()
++    for training_type in all_results:
++        all_endpoints.update(all_results[training_type].keys())
++    
++    def endpoint_sort_key(ep):
++        match = re.search(r'sqli(\d+)', ep)
++        return int(match.group(1)) if match else 999
++    
++    sorted_endpoints = sorted(all_endpoints, key=endpoint_sort_key)
++    
++    # Build data for DataFrame
++    data = []
++    for endpoint in sorted_endpoints:
++        row = {'Endpoint': endpoint}
++        
++        for training_type in ['non_san', 'sanitized']:
++            results_list = all_results[training_type].get(endpoint, [])
++            s = calculate_statistics(results_list)
++            
++            prefix = 'NonSan' if training_type == 'non_san' else 'San'
++            row[f'{prefix}_WinRate_Mean'] = s['win_rate_mean']
++            row[f'{prefix}_WinRate_CI'] = s['win_rate_ci']
++            row[f'{prefix}_WinRate_CI_Lower'] = s['win_rate_ci_lower']
++            row[f'{prefix}_WinRate_CI_Upper'] = s['win_rate_ci_upper']
++            row[f'{prefix}_Episodes_Mean'] = s['episodes_mean']
++            row[f'{prefix}_Episodes_CI'] = s['episodes_ci']
++            row[f'{prefix}_Episodes_CI_Lower'] = s['episodes_ci_lower']
++            row[f'{prefix}_Episodes_CI_Upper'] = s['episodes_ci_upper']
++            row[f'{prefix}_N'] = s['count']
++        
++        data.append(row)
++    
++    # Define sanitisation subset endpoints
++    sanitisation_endpoints = ['sqli14.php', 'sqli15.php', 'sqli16.php', 'sqli17.php', 
++                              'sqli18.php', 'sqli26.php', 'sqli27.php', 'sqli28.php', 'sqli29.php']
++    
++    # Add sanitisation subset row
++    san_row = {'Endpoint': 'SANITISATION'}
++    for training_type in ['non_san', 'sanitized']:
++        san_wins = []
++        san_episodes = []
++        for endpoint in sorted_endpoints:
++            if endpoint in sanitisation_endpoints:
++                results_list = all_results[training_type].get(endpoint, [])
++                for r in results_list:
++                    san_wins.append(1 if r['won'] else 0)
++                    san_episodes.append(r['episodes'])
++        
++        prefix = 'NonSan' if training_type == 'non_san' else 'San'
++        if san_wins:
++            win_mean, win_ci_lower, win_ci_upper, win_ci = calculate_confidence_interval(san_wins)
++            ep_mean, ep_ci_lower, ep_ci_upper, ep_ci = calculate_confidence_interval(san_episodes)
++            san_row[f'{prefix}_WinRate_Mean'] = win_mean * 100
++            san_row[f'{prefix}_WinRate_CI'] = win_ci * 100
++            san_row[f'{prefix}_WinRate_CI_Lower'] = win_ci_lower * 100
++            san_row[f'{prefix}_WinRate_CI_Upper'] = win_ci_upper * 100
++            san_row[f'{prefix}_Episodes_Mean'] = ep_mean
++            san_row[f'{prefix}_Episodes_CI'] = ep_ci
++            san_row[f'{prefix}_Episodes_CI_Lower'] = ep_ci_lower
++            san_row[f'{prefix}_Episodes_CI_Upper'] = ep_ci_upper
++            san_row[f'{prefix}_N'] = len(san_wins)
++        else:
++            san_row[f'{prefix}_WinRate_Mean'] = 0.0
++            san_row[f'{prefix}_WinRate_CI'] = 0.0
++            san_row[f'{prefix}_WinRate_CI_Lower'] = 0.0
++            san_row[f'{prefix}_WinRate_CI_Upper'] = 0.0
++            san_row[f'{prefix}_Episodes_Mean'] = 0.0
++            san_row[f'{prefix}_Episodes_CI'] = 0.0
++            san_row[f'{prefix}_Episodes_CI_Lower'] = 0.0
++            san_row[f'{prefix}_Episodes_CI_Upper'] = 0.0
++            san_row[f'{prefix}_N'] = 0
++    
++    data.append(san_row)
++    
++    # Add totals row
++    totals_row = {'Endpoint': 'TOTAL'}
++    for training_type in ['non_san', 'sanitized']:
++        all_wins = []
++        all_episodes = []
++        for endpoint in sorted_endpoints:
++            results_list = all_results[training_type].get(endpoint, [])
++            for r in results_list:
++                all_wins.append(1 if r['won'] else 0)
++                all_episodes.append(r['episodes'])
++        
++        prefix = 'NonSan' if training_type == 'non_san' else 'San'
++        if all_wins:
++            win_mean, win_ci_lower, win_ci_upper, win_ci = calculate_confidence_interval(all_wins)
++            ep_mean, ep_ci_lower, ep_ci_upper, ep_ci = calculate_confidence_interval(all_episodes)
++            totals_row[f'{prefix}_WinRate_Mean'] = win_mean * 100
++            totals_row[f'{prefix}_WinRate_CI'] = win_ci * 100
++            totals_row[f'{prefix}_WinRate_CI_Lower'] = win_ci_lower * 100
++            totals_row[f'{prefix}_WinRate_CI_Upper'] = win_ci_upper * 100
++            totals_row[f'{prefix}_Episodes_Mean'] = ep_mean
++            totals_row[f'{prefix}_Episodes_CI'] = ep_ci
++            totals_row[f'{prefix}_Episodes_CI_Lower'] = ep_ci_lower
++            totals_row[f'{prefix}_Episodes_CI_Upper'] = ep_ci_upper
++            totals_row[f'{prefix}_N'] = len(all_wins)
++        else:
++            totals_row[f'{prefix}_WinRate_Mean'] = 0.0
++            totals_row[f'{prefix}_WinRate_CI'] = 0.0
++            totals_row[f'{prefix}_WinRate_CI_Lower'] = 0.0
++            totals_row[f'{prefix}_WinRate_CI_Upper'] = 0.0
++            totals_row[f'{prefix}_Episodes_Mean'] = 0.0
++            totals_row[f'{prefix}_Episodes_CI'] = 0.0
++            totals_row[f'{prefix}_Episodes_CI_Lower'] = 0.0
++            totals_row[f'{prefix}_Episodes_CI_Upper'] = 0.0
++            totals_row[f'{prefix}_N'] = 0
++    
++    data.append(totals_row)
++    
++    df = pd.DataFrame(data)
++    return df
++
++
++def create_latex_table(all_results, output_file='results_table.tex'):
++    """
++    Create a LaTeX table from results using pandas.
++    
++    Generates a nicely formatted LaTeX table with mean ± 95% CI format.
++    """
++    # Collect all unique endpoints
++    all_endpoints = set()
++    for training_type in all_results:
++        all_endpoints.update(all_results[training_type].keys())
++    
++    def endpoint_sort_key(ep):
++        match = re.search(r'sqli(\d+)', ep)
++        return int(match.group(1)) if match else 999
++    
++    sorted_endpoints = sorted(all_endpoints, key=endpoint_sort_key)
++    
++    # Build data for formatted LaTeX table
++    data = []
++    for endpoint in sorted_endpoints:
++        row = {'Endpoint': endpoint.replace('.php', '').replace('sqli', 'SQLi-')}
++        
++        for training_type in ['non_san', 'sanitized']:
++            results_list = all_results[training_type].get(endpoint, [])
++            s = calculate_statistics(results_list)
++            
++            col_name = 'Non-Sanitized' if training_type == 'non_san' else 'Sanitized'
++            
++            # Format as [lower, upper] for 95% CI
++            row[f'{col_name} Win Rate (\\%)'] = f"$[{s['win_rate_ci_lower']:.1f}, {s['win_rate_ci_upper']:.1f}]$"
++            row[f'{col_name} Episodes'] = f"$[{s['episodes_ci_lower']:.2f}, {s['episodes_ci_upper']:.2f}]$"
++            row[f'{col_name} N'] = int(s['count'])
++        
++        data.append(row)
++    
++    # Define sanitisation subset endpoints
++    sanitisation_endpoints = ['sqli14.php', 'sqli15.php', 'sqli16.php', 'sqli17.php', 
++                              'sqli18.php', 'sqli26.php', 'sqli27.php', 'sqli28.php', 'sqli29.php']
++    
++    # Add sanitisation subset row
++    san_row = {'Endpoint': '\\textbf{Sanitisation}'}
++    for training_type in ['non_san', 'sanitized']:
++        san_wins = []
++        san_episodes = []
++        for endpoint in sorted_endpoints:
++            if endpoint in sanitisation_endpoints:
++                results_list = all_results[training_type].get(endpoint, [])
++                for r in results_list:
++                    san_wins.append(1 if r['won'] else 0)
++                    san_episodes.append(r['episodes'])
++        
++        col_name = 'Non-Sanitized' if training_type == 'non_san' else 'Sanitized'
++        if san_wins:
++            _, win_ci_lower, win_ci_upper, _ = calculate_confidence_interval(san_wins)
++            _, ep_ci_lower, ep_ci_upper, _ = calculate_confidence_interval(san_episodes)
++            win_ci_lower *= 100
++            win_ci_upper *= 100
++            n = len(san_wins)
++        else:
++            win_ci_lower = win_ci_upper = ep_ci_lower = ep_ci_upper = 0.0
++            n = 0
++        
++        san_row[f'{col_name} Win Rate (\\%)'] = f"$\\mathbf{{[{win_ci_lower:.1f}, {win_ci_upper:.1f}]}}$"
++        san_row[f'{col_name} Episodes'] = f"$\\mathbf{{[{ep_ci_lower:.2f}, {ep_ci_upper:.2f}]}}$"
++        san_row[f'{col_name} N'] = n
++    
++    data.append(san_row)
++    
++    # Add totals row
++    totals_row = {'Endpoint': '\\textbf{TOTAL}'}
++    for training_type in ['non_san', 'sanitized']:
++        all_wins = []
++        all_episodes = []
++        for endpoint in sorted_endpoints:
++            results_list = all_results[training_type].get(endpoint, [])
++            for r in results_list:
++                all_wins.append(1 if r['won'] else 0)
++                all_episodes.append(r['episodes'])
++        
++        col_name = 'Non-Sanitized' if training_type == 'non_san' else 'Sanitized'
++        if all_wins:
++            _, win_ci_lower, win_ci_upper, _ = calculate_confidence_interval(all_wins)
++            _, ep_ci_lower, ep_ci_upper, _ = calculate_confidence_interval(all_episodes)
++            win_ci_lower *= 100
++            win_ci_upper *= 100
++            n = len(all_wins)
++        else:
++            win_ci_lower = win_ci_upper = ep_ci_lower = ep_ci_upper = 0.0
++            n = 0
++        
++        totals_row[f'{col_name} Win Rate (\\%)'] = f"$\\mathbf{{[{win_ci_lower:.1f}, {win_ci_upper:.1f}]}}$"
++        totals_row[f'{col_name} Episodes'] = f"$\\mathbf{{[{ep_ci_lower:.2f}, {ep_ci_upper:.2f}]}}$"
++        totals_row[f'{col_name} N'] = n
++    
++    data.append(totals_row)
++    
++    df = pd.DataFrame(data)
++    
++    # Generate LaTeX table
++    latex_str = df.to_latex(
++        index=False,
++        escape=False,  # Don't escape LaTeX commands
++        column_format='l' + 'r' * (len(df.columns) - 1),
++        caption='SQIRL Test Results: Comparison of Agents Trained on Sanitized vs Non-Sanitized Endpoints (95\\% CI)',
++        label='tab:sqirl_results',
++        position='htbp'
++    )
++    
++    # Write to file
++    with open(output_file, 'w') as f:
++        f.write("% Values shown as 95% Confidence Interval [Lower, Upper]\n")
++        f.write(latex_str)
++    
++    print(f"LaTeX table exported to: {output_file}")
++    
++    return df
++
++
++def create_compact_latex_table(all_results, output_file='results_table_compact.tex'):
++    """
++    Create a more compact LaTeX table with Non-San and San side by side per metric.
++    Uses 95% confidence intervals.
++    """
++    # Collect all unique endpoints
++    all_endpoints = set()
++    for training_type in all_results:
++        all_endpoints.update(all_results[training_type].keys())
++    
++    def endpoint_sort_key(ep):
++        match = re.search(r'sqli(\d+)', ep)
++        return int(match.group(1)) if match else 999
++    
++    sorted_endpoints = sorted(all_endpoints, key=endpoint_sort_key)
++    
++    # Build data for compact table (two rows per endpoint - one for each training type)
++    data = []
++    for endpoint in sorted_endpoints:
++        for training_type in ['non_san', 'sanitized']:
++            results_list = all_results[training_type].get(endpoint, [])
++            s = calculate_statistics(results_list)
++            
++            type_label = 'Non-San' if training_type == 'non_san' else 'Sanitized'
++            ep_label = endpoint.replace('.php', '').replace('sqli', '') if training_type == 'non_san' else ''
++            
++            # Format as [lower, upper] for CI
++            row = {
++                'Endpoint': ep_label,
++                'Training': type_label,
++                'Win Rate (\\%)': f"$[{s['win_rate_ci_lower']:.1f}, {s['win_rate_ci_upper']:.1f}]$",
++                'Episodes': f"$[{s['episodes_ci_lower']:.2f}, {s['episodes_ci_upper']:.2f}]$",
++                'N': int(s['count'])
++            }
++            data.append(row)
++    
++    # Define sanitisation subset endpoints
++    sanitisation_endpoints = ['sqli14.php', 'sqli15.php', 'sqli16.php', 'sqli17.php', 
++                              'sqli18.php', 'sqli26.php', 'sqli27.php', 'sqli28.php', 'sqli29.php']
++    
++    # Add sanitisation subset totals
++    for training_type in ['non_san', 'sanitized']:
++        san_wins = []
++        san_episodes = []
++        for endpoint in sorted_endpoints:
++            if endpoint in sanitisation_endpoints:
++                results_list = all_results[training_type].get(endpoint, [])
++                for r in results_list:
++                    san_wins.append(1 if r['won'] else 0)
++                    san_episodes.append(r['episodes'])
++        
++        type_label = 'Non-San' if training_type == 'non_san' else 'Sanitized'
++        ep_label = '\\textbf{Sanitisation}' if training_type == 'non_san' else ''
++        
++        if san_wins:
++            win_mean, win_ci_lower, win_ci_upper, _ = calculate_confidence_interval(san_wins)
++            ep_mean, ep_ci_lower, ep_ci_upper, _ = calculate_confidence_interval(san_episodes)
++            win_ci_lower *= 100
++            win_ci_upper *= 100
++            n = len(san_wins)
++        else:
++            win_ci_lower = win_ci_upper = ep_ci_lower = ep_ci_upper = 0.0
++            n = 0
++        
++        row = {
++            'Endpoint': ep_label,
++            'Training': f'\\textbf{{{type_label}}}',
++            'Win Rate (\\%)': f"$\\mathbf{{[{win_ci_lower:.1f}, {win_ci_upper:.1f}]}}$",
++            'Episodes': f"$\\mathbf{{[{ep_ci_lower:.2f}, {ep_ci_upper:.2f}]}}$",
++            'N': n
++        }
++        data.append(row)
++    
++    # Add totals
++    for training_type in ['non_san', 'sanitized']:
++        all_wins = []
++        all_episodes = []
++        for endpoint in sorted_endpoints:
++            results_list = all_results[training_type].get(endpoint, [])
++            for r in results_list:
++                all_wins.append(1 if r['won'] else 0)
++                all_episodes.append(r['episodes'])
++        
++        type_label = 'Non-San' if training_type == 'non_san' else 'Sanitized'
++        ep_label = '\\textbf{Total}' if training_type == 'non_san' else ''
++        
++        if all_wins:
++            win_mean, win_ci_lower, win_ci_upper, _ = calculate_confidence_interval(all_wins)
++            ep_mean, ep_ci_lower, ep_ci_upper, _ = calculate_confidence_interval(all_episodes)
++            win_ci_lower *= 100
++            win_ci_upper *= 100
++            n = len(all_wins)
++        else:
++            win_ci_lower = win_ci_upper = ep_ci_lower = ep_ci_upper = 0.0
++            n = 0
++        
++        row = {
++            'Endpoint': ep_label,
++            'Training': f'\\textbf{{{type_label}}}',
++            'Win Rate (\\%)': f"$\\mathbf{{[{win_ci_lower:.1f}, {win_ci_upper:.1f}]}}$",
++            'Episodes': f"$\\mathbf{{[{ep_ci_lower:.2f}, {ep_ci_upper:.2f}]}}$",
++            'N': n
++        }
++        data.append(row)
++    
++    df = pd.DataFrame(data)
++    
++    # Generate LaTeX with booktabs style
++    latex_str = df.to_latex(
++        index=False,
++        escape=False,
++        column_format='clrrr',
++        caption='SQIRL Test Results on no\\_feedback.php: Win Rate and Episodes by Training Type (95\\% CI)',
++        label='tab:sqirl_results_compact',
++        position='htbp'
++    )
++    
++    # Add booktabs commands for nicer formatting
++    latex_str = latex_str.replace('\\toprule', '\\toprule\n\\multicolumn{5}{c}{\\textit{95\\% Confidence Interval [Lower, Upper]}} \\\\')
++    
++    with open(output_file, 'w') as f:
++        f.write("% Requires: \\usepackage{booktabs}\n")
++        f.write("% Values shown as 95% Confidence Interval [Lower, Upper]\n")
++        f.write(latex_str)
++    
++    print(f"Compact LaTeX table exported to: {output_file}")
++    
++    return df
++
++
++def export_csv(all_results, output_file='results_analysis.csv'):
++    """Export results to CSV file using pandas."""
++    
++    df = create_results_dataframe(all_results)
++    df.to_csv(output_file, index=False)
++    print(f"CSV exported to: {output_file}")
++
++
++def main():
++    # Default to test_results in current directory
++    test_results_dir = './test_results'
++    
++    if len(sys.argv) > 1:
++        test_results_dir = sys.argv[1]
++    
++    if not os.path.isdir(test_results_dir):
++        print(f"Error: Directory not found: {test_results_dir}")
++        sys.exit(1)
++    
++    print(f"Analyzing results from: {test_results_dir}")
++    
++    # Collect all results
++    all_results = collect_all_results(test_results_dir)
++    
++    # Print formatted table to terminal
++    print_results_table(all_results)
++    
++    # Create pandas DataFrame and export to CSV
++    df = create_results_dataframe(all_results)
++    df.to_csv('results_analysis.csv', index=False)
++    print(f"CSV exported to: results_analysis.csv")
++    
++    # Create LaTeX tables
++    create_latex_table(all_results, 'results_table.tex')
++    create_compact_latex_table(all_results, 'results_table_compact.tex')
++    
++    # Print the DataFrame summary
++    print(f"\n{Colors.BOLD}DataFrame Summary:{Colors.END}")
++    print(df.to_string(index=False))
++    
++    # Also print the LaTeX table content to terminal
++    print(f"\n{Colors.BOLD}{Colors.CYAN}LaTeX Table (Compact):{Colors.END}")
++    with open('results_table_compact.tex', 'r') as f:
++        print(f.read())
++
++
++if __name__ == '__main__':
++    main()
++
+Binary files SQIRL-main/nltk_data/.DS_Store and Modified-SQiRL/nltk_data/.DS_Store differ
+Binary files SQIRL-main/nltk_data/corpora/.DS_Store and Modified-SQiRL/nltk_data/corpora/.DS_Store differ
+diff -ruN SQIRL-main/requirements.txt Modified-SQiRL/requirements.txt
+--- SQIRL-main/requirements.txt	2023-06-27 03:04:00
++++ Modified-SQiRL/requirements.txt	2026-01-22 20:09:50
+@@ -7,6 +7,9 @@
+ regex==2022.4.24
+ requests==2.26.0
+ requests_html==0.10.0
++fake_useragent==0.1.11
++lxml
++lxml_html_clean
+ scikit_learn==1.1.2
+ sql_metadata==2.6.0
+ sqlparse==0.4.2
+diff -ruN SQIRL-main/sqirl.py Modified-SQiRL/sqirl.py
+--- SQIRL-main/sqirl.py	2023-06-27 03:04:00
++++ Modified-SQiRL/sqirl.py	2026-01-22 20:09:50
+@@ -33,8 +33,8 @@
+                           help="Full URL to crawl", default=None)
+ 
+         parser.add_option('--gui',
+-                          action="store_false", dest="gui",
+-                          help="Use the SQIRL gui if the flag is set")
++                          action="store_true", dest="gui",
++                          help="Use the SQIRL gui if the flag is set", default=False)
+ 
+         parser.add_option('-i', '--num_agents',
+                           action="store", dest="num_agents",
+@@ -158,12 +158,6 @@
+                 os.killpg(os.getpgid(sub_pro.pid), signal.SIGTERM)
+ 
+         elif options.gui:
+-            if int(num_agents) > 1:
+-                print(f'Setting --num_agents to 1')
+-                num_agents = 1
+-            log_output = sqril_cmd(print,target_url, max_depth, verbose, db_type,log_file, model_dir, is_learning, no_episodes, max_timestamp, win_criteria, loss_criteria, crawler_input, sql_proxy_input, num_agents, input_selection, agent_type, login_module)
+-            print(f'SQIRL RUN COMPLETE, PLEASE CONSULT DIRECTORY: {log_output}')
+-        else:
+             try:
+                 if int(num_agents) > 1:
+                     print(f'Setting --num_agents to 1')
+@@ -174,5 +168,11 @@
+                 endwin()
+                 print(e)
+                 traceback.print_exc()
++        else:
++            if int(num_agents) > 1:
++                print(f'Setting --num_agents to 1')
++                num_agents = 1
++            log_output = sqril_cmd(print,target_url, max_depth, verbose, db_type,log_file, model_dir, is_learning, no_episodes, max_timestamp, win_criteria, loss_criteria, crawler_input, sql_proxy_input, num_agents, input_selection, agent_type, login_module)
++            print(f'SQIRL RUN COMPLETE, PLEASE CONSULT DIRECTORY: {log_output}')
+ 
+ 
+diff -ruN SQIRL-main/sqirl_subprocess.py Modified-SQiRL/sqirl_subprocess.py
+--- SQIRL-main/sqirl_subprocess.py	2023-06-27 03:04:00
++++ Modified-SQiRL/sqirl_subprocess.py	2026-01-22 20:09:50
+@@ -95,6 +95,9 @@
+                           action="store", dest="module_path",
+                           help="Path to the .py file used for authentication",
+                           default=None)
++        parser.add_option('--san',
++                          action="store", dest="san",
++                          help="Boolean to set if SQLI is sanitised", default=True)
+         
+         options, args = parser.parse_args()
+         if options.url == None:
+@@ -144,7 +147,7 @@
+         domain = env.current_input_entry.input.action.split('/')[2]
+ 
+ 
+-        log_location = f'stats_logs/{domain}_{save_time}'
++        log_location = f'stats_logs/{domain}_{save_time}_san_{san}'
+         if int(agent_type) != 4:
+             os.makedirs(f'stats_logs/{domain}_{save_time}')
+             os.rename("./stats_logs/all_inputs_found.stat",f"./{log_location}/all_inputs_found.stat")
+diff -ruN SQIRL-main/test_agents.sh Modified-SQiRL/test_agents.sh
+--- SQIRL-main/test_agents.sh	1970-01-01 01:00:00
++++ Modified-SQiRL/test_agents.sh	2026-01-22 20:09:50
+@@ -0,0 +1,261 @@
++#!/bin/bash
++
++# Script to test all trained agents on the no_feedback.php endpoint
++# Tests agents from both stats_logs_non_san and stats_logs_sanitized directories
++
++# Configuration
++BASE_URL="http://localhost:8000"
++TEST_ENDPOINT="${BASE_URL}/no_feedback.php"
++LOG_FILE="./SQLiMicrobenchmark/mysql/general.log"
++VERBOSE=2
++LOSS_CRITERIA=10
++WIN_CRITERIA=1
++EPISODES=10
++MAX_TIMESTAMP=10
++
++# Output directory base
++OUTPUT_BASE="./test_results"
++TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
++
++# Colors for output
++RED='\033[0;31m'
++GREEN='\033[0;32m'
++YELLOW='\033[1;33m'
++BLUE='\033[0;34m'
++CYAN='\033[0;36m'
++NC='\033[0m' # No Color
++
++# Function to print colored output
++print_status() {
++    echo -e "${BLUE}[INFO]${NC} $1"
++}
++
++print_success() {
++    echo -e "${GREEN}[SUCCESS]${NC} $1"
++}
++
++print_error() {
++    echo -e "${RED}[ERROR]${NC} $1"
++}
++
++print_warning() {
++    echo -e "${YELLOW}[WARNING]${NC} $1"
++}
++
++print_header() {
++    echo -e "${CYAN}=========================================="
++    echo -e "$1"
++    echo -e "==========================================${NC}"
++}
++
++# Function to check if required services are running
++check_services() {
++    print_status "Checking if services are running..."
++
++    # Check if docker container is running
++    if [ -d "SQLiMicrobenchmark" ]; then
++        cd SQLiMicrobenchmark
++        docker compose up -d 2>/dev/null || docker-compose up -d 2>/dev/null
++        sleep 5
++        cd ..
++    else
++        print_warning "SQLiMicrobenchmark directory not found. Please ensure the container is running manually."
++    fi
++
++    # Test endpoint
++    curl -s -o /dev/null -w "%{http_code}" "$TEST_ENDPOINT" > /dev/null 2>&1
++    if [ $? -ne 0 ]; then
++        print_error "Cannot reach $TEST_ENDPOINT. Please ensure the server is running."
++        exit 1
++    fi
++
++    # Check if log file exists
++    if [ ! -f "$LOG_FILE" ]; then
++        print_error "Log file not found: $LOG_FILE"
++        print_status "Please ensure the SQLiMicrobenchmark is running and the log file exists"
++        exit 1
++    fi
++
++    # Check if log file is writable
++    if [ ! -w "$LOG_FILE" ]; then
++        print_warning "Log file is not writable. Attempting to fix permissions..."
++        sudo chmod 777 "$LOG_FILE" 2>/dev/null || {
++            print_error "Cannot fix permissions for log file. Please run: chmod +rw $LOG_FILE"
++            exit 1
++        }
++    fi
++
++    print_success "Services check complete"
++}
++
++# Function to find model checkpoint directory within a stats_log directory
++find_model_checkpoint() {
++    local stats_dir=$1
++    
++    # Look for checkpoint directories (DQN_Agent_Checkpoint, DQN_RND_Agent_Checkpoint, etc.)
++    for checkpoint_type in "DQN_RND_Agent_Checkpoint"; do
++        if [ -d "${stats_dir}/${checkpoint_type}" ]; then
++            echo "${stats_dir}/${checkpoint_type}"
++            return 0
++        fi
++    done
++    
++    return 1
++}
++
++# Function to test a single agent
++test_agent() {
++    local model_dir=$1
++    local source_type=$2  # "non_san" or "sanitized"
++    local stats_dirname=$3
++
++    # Create descriptive output directory name
++    local output_dir="${OUTPUT_BASE}/TEST_${source_type}_${stats_dirname}_on_no_feedback_${TIMESTAMP}"
++    
++    print_status "Testing agent from: $model_dir"
++    print_status "Source: stats_logs_${source_type}/${stats_dirname}"
++    print_status "Output will be saved to: $output_dir"
++
++    python3 sqirl.py \
++        -u "$TEST_ENDPOINT" \
++        -v $VERBOSE \
++        --log_file "$LOG_FILE" \
++        --loss_criteria $LOSS_CRITERIA \
++        --win_criteria $WIN_CRITERIA \
++        --model_dir "$model_dir" \
++        --learning False \
++        --episodes $EPISODES \
++        --max_timestamp $MAX_TIMESTAMP
++
++    local exit_code=$?
++    
++    if [ $exit_code -eq 0 ]; then
++        # Move results from stats_logs to output directory
++        mkdir -p "$output_dir"
++        
++        # Find the most recent stats_logs directory (the one just created)
++        latest_result=$(ls -td ./stats_logs/*/ 2>/dev/null | head -1)
++        if [ -n "$latest_result" ] && [ -d "$latest_result" ]; then
++            cp -r "$latest_result"/* "$output_dir/"
++            rm -rf "$latest_result"
++            
++            # Create a metadata file to track the source
++            cat > "${output_dir}/test_metadata.txt" <<EOF
++Test Metadata
++=============
++Test Timestamp: $TIMESTAMP
++Source Stats Log: stats_logs_${source_type}/${stats_dirname}
++Model Directory: $model_dir
++Test Endpoint: $TEST_ENDPOINT
++Source Type: $source_type
++EOF
++        fi
++        
++        print_success "Completed testing agent from ${source_type}/${stats_dirname}"
++    else
++        print_error "Failed testing agent from ${source_type}/${stats_dirname} (exit code: $exit_code)"
++        return $exit_code
++    fi
++}
++
++# Function to test all agents in a stats_logs directory
++test_agents_from_dir() {
++    local stats_logs_dir=$1
++    local source_type=$2
++
++    print_header "Testing agents from: $stats_logs_dir ($source_type)"
++    
++    if [ ! -d "$stats_logs_dir" ]; then
++        print_warning "Directory not found: $stats_logs_dir"
++        return 1
++    fi
++
++    local agent_count=0
++    local success_count=0
++    local fail_count=0
++
++    # Iterate through each subdirectory in stats_logs_*
++    for stats_subdir in "$stats_logs_dir"/*; do
++        if [ -d "$stats_subdir" ]; then
++            local stats_dirname=$(basename "$stats_subdir")
++            
++            # Find the model checkpoint in this directory
++            model_checkpoint=$(find_model_checkpoint "$stats_subdir")
++            
++            if [ -n "$model_checkpoint" ]; then
++                agent_count=$((agent_count + 1))
++                print_status "[$agent_count] Found model: $model_checkpoint"
++                
++                test_agent "$model_checkpoint" "$source_type" "$stats_dirname"
++                
++                if [ $? -eq 0 ]; then
++                    success_count=$((success_count + 1))
++                else
++                    fail_count=$((fail_count + 1))
++                fi
++                
++                echo ""
++            else
++                print_warning "No model checkpoint found in: $stats_subdir"
++            fi
++        fi
++    done
++
++    print_status "Completed testing from $stats_logs_dir"
++    print_status "  Total: $agent_count, Success: $success_count, Failed: $fail_count"
++    echo ""
++}
++
++# Main function
++main() {
++    print_header "SQIRL Agent Testing Script"
++    print_status "Testing all agents on: $TEST_ENDPOINT"
++    print_status "Test run timestamp: $TIMESTAMP"
++    echo ""
++
++    # Check services before starting
++    check_services
++
++    # Create output base directory
++    mkdir -p "$OUTPUT_BASE"
++    mkdir -p "./stats_logs"
++
++    # Count total agents to test
++    NON_SAN_COUNT=$(find ./stats_logs_non_san -maxdepth 2 -type d -name "*Checkpoint*" 2>/dev/null | wc -l)
++    SANITIZED_COUNT=$(find ./stats_logs_sanitized -maxdepth 2 -type d -name "*Checkpoint*" 2>/dev/null | wc -l)
++    TOTAL_AGENTS=$((NON_SAN_COUNT + SANITIZED_COUNT))
++
++    print_status "Found $NON_SAN_COUNT agents in stats_logs_non_san"
++    print_status "Found $SANITIZED_COUNT agents in stats_logs_sanitized"
++    print_status "Total agents to test: $TOTAL_AGENTS"
++    echo ""
++
++    # Test agents from stats_logs_non_san
++    test_agents_from_dir "./stats_logs_non_san" "non_san"
++
++    # Test agents from stats_logs_sanitized
++    test_agents_from_dir "./stats_logs_sanitized" "sanitized"
++
++    print_header "Testing Complete!"
++    print_status "All test results saved in: $OUTPUT_BASE"
++    print_status ""
++    print_status "Output directory naming convention:"
++    print_status "  TEST_<source_type>_<original_stats_dir>_on_no_feedback_<timestamp>"
++    print_status ""
++    print_status "Each test directory contains:"
++    print_status "  - test_metadata.txt (source tracking info)"
++    print_status "  - result_stats_*.stats (test results)"
++    print_status "  - actions_Applied_*.stats (action logs)"
++    print_status "  - sql_statment_*.stats (SQL statements)"
++    print_status "  - rewards_*.stats (reward logs)"
++    echo ""
++    print_status "To view all test results:"
++    print_status "  ls -la $OUTPUT_BASE/"
++}
++
++# Run main function
++main "$@"
++
++
++
++
+diff -ruN SQIRL-main/train_agents.sh Modified-SQiRL/train_agents.sh
+--- SQIRL-main/train_agents.sh	1970-01-01 01:00:00
++++ Modified-SQiRL/train_agents.sh	2026-01-22 20:09:50
+@@ -0,0 +1,175 @@
++#!/bin/bash
++
++# Script to train 10 DQN agents and 10 DQN_RND agents iteratively
++# on both sanitized and non-sanitized versions of the SQLiMicrobenchmark
++
++# Configuration
++BASE_URL="http://localhost:8000"
++LOG_FILE="./SQLiMicrobenchmark/mysql/general.log"
++NUM_AGENTS=20
++VERBOSE=2
++LOSS_CRITERIA=200
++WIN_CRITERIA=14
++EPISODES=200
++MAX_TIMESTAMP=30
++
++# Colors for output
++RED='\033[0;31m'
++GREEN='\033[0;32m'
++YELLOW='\033[1;33m'
++BLUE='\033[0;34m'
++NC='\033[0m' # No Color
++
++# Function to print colored output
++print_status() {
++    echo -e "${BLUE}[INFO]${NC} $1"
++}
++
++print_success() {
++    echo -e "${GREEN}[SUCCESS]${NC} $1"
++}
++
++print_error() {
++    echo -e "${RED}[ERROR]${NC} $1"
++}
++
++print_warning() {
++    echo -e "${YELLOW}[WARNING]${NC} $1"
++}
++
++# Function to check if required services are running
++check_services() {
++    print_status "Checking if services are running..."
++
++    # Check if docker container is running
++    if [ -d "SQLiMicrobenchmark" ]; then
++        cd SQLiMicrobenchmark
++        docker compose up -d 2>/dev/null || docker-compose up -d 2>/dev/null
++        sleep 5
++        cd ..
++    else
++        print_warning "SQLiMicrobenchmark directory not found. Please ensure the container is running manually."
++    fi
++
++
++    curl -X GET "http://localhost:8000/functions_external/sqli1.php?id=test&difficulty=None" > /dev/null 2>&1
++
++
++    # Check if log file exists
++    if [ ! -f "$LOG_FILE" ]; then
++        print_error "Log file not found: $LOG_FILE"
++        print_status "Please ensure the SQLiMicrobenchmark is running and the log file exists"
++        exit 1
++    fi
++
++    # Check if log file is writable
++    if [ ! -w "$LOG_FILE" ]; then
++        print_warning "Log file is not writable. Attempting to fix permissions..."
++        sudo chmod 777 "$LOG_FILE" 2>/dev/null || {
++            print_error "Cannot fix permissions for log file. Please run: chmod +rw $LOG_FILE"
++            exit 1
++        }
++    fi
++
++    print_success "Services check complete"
++}
++
++# Function to train a single agent
++train_agent() {
++    local agent_type=$1
++    local agent_num=$2
++    local url=$3
++    local agent_name=$4
++
++    print_status "Training $agent_name #$agent_num (Agent Type: $agent_type) on $url"
++
++    python3 sqirl.py \
++        -u "$url" \
++        -v $VERBOSE \
++        --log_file "$LOG_FILE" \
++        --loss_criteria $LOSS_CRITERIA \
++        --win_criteria $WIN_CRITERIA \
++        --agent $agent_type \
++        --learning True \
++        --episodes $EPISODES \
++        --max_timestamp $MAX_TIMESTAMP
++
++    local exit_code=$?
++    if [ $exit_code -eq 0 ]; then
++        print_success "Completed training $agent_name #$agent_num"
++    else
++        print_error "Failed training $agent_name #$agent_num (exit code: $exit_code)"
++        return $exit_code
++    fi
++}
++
++# Main training function
++main() {
++    print_status "Starting training script for $NUM_AGENTS agents of each type"
++    print_status "Training on both sanitized and non-sanitized versions"
++    echo ""
++
++    # Check services before starting
++    check_services
++
++    print_status "Results will be saved in: $RESULTS_DIR"
++    echo ""
++
++    # Training counters
++    TOTAL_TRAININGS=$((NUM_AGENTS * 2))  # 10 DQN_RND sanitized + 10 DQN_RND non-sanitized
++    CURRENT_TRAINING=0
++
++    mkdir stats_logs
++
++    # Train 10 DQN_RND agents on sanitized version (training.php)
++    print_status "=========================================="
++    print_status "Phase 1: Training DQN_RND agents (Agent Type 2) on SANITIZED version"
++    print_status "=========================================="
++    for i in $(seq 1 $NUM_AGENTS); do
++        CURRENT_TRAINING=$((CURRENT_TRAINING + 1))
++        print_status "[$CURRENT_TRAINING/$TOTAL_TRAININGS] Starting DQN_RND agent #$i (sanitized)"
++        train_agent 2 $i "${BASE_URL}/training.php" "DQN_RND (sanitized)"
++        echo ""
++        #sleep 2  # Small delay between trainings
++    done
++    mkdir -p ./stats_logs_sanitized/
++    mv ./stats_logs/* ./stats_logs_sanitized/
++    mkdir ./stats_logs
++    # Train 10 DQN_RND agents on non-sanitized version (training_no_san.php)
++    print_status "=========================================="
++    print_status "Phase 2: Training DQN_RND agents (Agent Type 2) on NON-SANITIZED version"
++    print_status "=========================================="
++    for i in $(seq 1 $NUM_AGENTS); do
++        CURRENT_TRAINING=$((CURRENT_TRAINING + 1))
++        print_status "[$CURRENT_TRAINING/$TOTAL_TRAININGS] Starting DQN_RND agent #$i (non-sanitized)"
++        train_agent 2 $i "${BASE_URL}/training_no_san.php" "DQN_RND (non-sanitized)"
++        echo ""
++        #sleep 2  # Small delay between trainings
++    done
++    mv ./stats_logs/* ./stats_logs_non_san
++    print_status "=========================================="
++    print_success "All training completed!"
++    print_status "=========================================="
++    print_status "Total agents trained: $TOTAL_TRAININGS"
++    print_status "- $NUM_AGENTS DQN agents on sanitized version"
++    print_status "- $NUM_AGENTS DQN agents on non-sanitized version"
++    print_status "- $NUM_AGENTS DQN_RND agents on sanitized version"
++    print_status "- $NUM_AGENTS DQN_RND agents on non-sanitized version"
++    print_status ""
++    print_status "Training logs and model checkpoints are saved in:"
++    print_status "  - stats_logs/ directory"
++    print_status ""
++    print_status "To view the latest training results, check:"
++    print_status "  ls -lt stats_logs/ | head -20"
++    print_status ""
++    print_status "Each training run creates a directory with timestamp containing:"
++    print_status "  - Model checkpoints (DQN_Agent_Checkpoint/ or DQN_RND_Agent_Checkpoint/)"
++    print_status "  - Training statistics (result_stats_*.stats)"
++    print_status "  - Action logs (actions_Applied_*.stats)"
++    print_status "  - SQL statements (sql_statment_*.stats)"
++    print_status "  - Rewards (rewards_*.stats)"
++}
++
++# Run main function
++main "$@"
++

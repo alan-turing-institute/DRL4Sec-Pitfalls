@@ -1,0 +1,22 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: "Emerson"
+    given-names: "Harry"
+  - family-names: "Bates"
+    given-names: "Liz"
+  - family-names: "Hicks"
+    given-names: "Chris"
+  - family-names: "Mavroudis"
+    given-names: "Vasilios"
+title: "Cyborg++: An enhanced gym for the development of autonomous cyber agents"
+version: "1.0.0"
+repository-code: "https://github.com/alan-turing-institute/CybORG_plus_plus"
+license: "MIT"
+year: 2024
+keywords:
+  - "Reinforcement Learning"
+  - "Autonomous Network Defense"
+  - "Cybersecurity"
+  - "AI"
+  - "Research"
