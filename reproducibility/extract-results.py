@@ -470,7 +470,7 @@ def section_minicage(out: List[str], n_episodes: int, max_steps: int) -> None:
 def main(argv: List[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--eval-episodes", type=int, default=100,
+        "--eval-episodes", type=int, default=1000,
         help="MiniCAGE evaluation episodes per (agent, eval-config) [default: 100]"
     )
     parser.add_argument(

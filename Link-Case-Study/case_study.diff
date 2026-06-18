@@ -1,6 +1,7 @@
+Binary files Link-main/.DS_Store and Modified-Link/.DS_Store differ
 diff -ruN Link-main/compress_logs.py Modified-Link/compress_logs.py
 --- Link-main/compress_logs.py	1970-01-01 01:00:00
-+++ Modified-Link/compress_logs.py	2026-01-22 19:47:12
++++ Modified-Link/compress_logs.py	2026-06-18 00:38:44
 @@ -0,0 +1,278 @@
 +#!/usr/bin/env python3
 +"""
@@ -34,24 +35,24 @@ diff -ruN Link-main/compress_logs.py Modified-Link/compress_logs.py
 +def compress_log_file(input_file: str, output_file: Optional[str] = None, backup: bool = True):
 +    """
 +    Compress a log file to the minimal format, processing line by line.
-+    
++
 +    Args:
 +        input_file: Path to the input log file
 +        output_file: Path to the output file (default: overwrite input)
 +        backup: Whether to create a backup of the original file
 +    """
 +    print(f"Compressing {os.path.basename(input_file)}...")
-+    
++
 +    # Get original file size for progress tracking
 +    input_size = os.path.getsize(input_file)
-+    
++
 +    # Create backup if requested
 +    if backup and output_file is None:
 +        backup_file = input_file + ".backup"
 +        if not os.path.exists(backup_file):
 +            print(f"  Creating backup: {os.path.basename(backup_file)}")
 +            shutil.copy2(input_file, backup_file)
-+    
++
 +    # Determine output file (use temp file if overwriting to avoid issues)
 +    use_temp = False
 +    if output_file is None:
@@ -60,11 +61,11 @@ diff -ruN Link-main/compress_logs.py Modified-Link/compress_logs.py
 +        use_temp = True
 +    else:
 +        temp_output = output_file
-+    
++
 +    # Patterns for matching
 +    step_log_pattern = re.compile(r'-+step log-+')
 +    separator_pattern = re.compile(r'-{10,}')
-+    
++
 +    # State tracking
 +    in_step_log = False
 +    current_step_data = {}
@@ -72,7 +73,7 @@ diff -ruN Link-main/compress_logs.py Modified-Link/compress_logs.py
 +    payload_lines = []
 +    in_payload = False
 +    step_count = 0
-+    
++
 +    # Process file line by line
 +    try:
 +        with open(input_file, 'r', encoding='utf-8') as f_in:
@@ -82,7 +83,7 @@ diff -ruN Link-main/compress_logs.py Modified-Link/compress_logs.py
 +                    for line in f_in:
 +                        bytes_read = len(line.encode('utf-8'))
 +                        pbar.update(bytes_read)
-+                        
++
 +                        # Check if this is the start of a step log section
 +                        if step_log_pattern.match(line.strip()):
 +                            in_step_log = True
@@ -91,70 +92,70 @@ diff -ruN Link-main/compress_logs.py Modified-Link/compress_logs.py
 +                            payload_lines = []
 +                            in_payload = False
 +                            continue
-+                        
++
 +                        # If we're in a step log section
 +                        if in_step_log:
 +                            # Check if this is the separator line (end of step log)
 +                            if separator_pattern.match(line.strip()):
 +                                # Process the accumulated section
 +                                section_text = '\n'.join(current_section_lines)
-+                                
++
 +                                # Extract reward
 +                                reward_match = re.search(r'reward:\s*([-\d.]+)', section_text)
 +                                if reward_match:
 +                                    current_step_data['reward'] = float(reward_match.group(1))
-+                                
++
 +                                # Extract done
 +                                done_match = re.search(r'done:\s*(True|False)', section_text)
 +                                if done_match:
 +                                    current_step_data['done'] = done_match.group(1) == 'True'
-+                                
++
 +                                # Extract try
 +                                try_match = re.search(r'try:\s*(\d+)', section_text)
 +                                if try_match:
 +                                    current_step_data['try'] = int(try_match.group(1))
-+                                
++
 +                                # If done is True, also extract payload and url
 +                                if current_step_data.get('done', False):
 +                                    # Extract url (line starting with "url:")
 +                                    url_match = re.search(r'^url:\s*(.+)$', section_text, re.MULTILINE)
 +                                    if url_match:
 +                                        current_step_data['url'] = url_match.group(1).strip()
-+                                    
++
 +                                    # Process accumulated payload lines
 +                                    if payload_lines:
 +                                        payload_value = ''.join(payload_lines).strip()
 +                                        payload_value = payload_value.rstrip('\n\r')
 +                                        if payload_value:
 +                                            current_step_data['payload'] = payload_value
-+                                
++
 +                                # Write compressed format immediately
 +                                if current_step_data:
 +                                    step_count += 1
 +                                    f_out.write("----------------step log----------------\n")
-+                                    
++
 +                                    # Write try
 +                                    if 'try' in current_step_data:
 +                                        f_out.write(f"try: {current_step_data['try']}\n")
-+                                    
++
 +                                    # Write reward
 +                                    if 'reward' in current_step_data:
 +                                        f_out.write(f"reward: {current_step_data['reward']}\n")
-+                                    
++
 +                                    # Write done
 +                                    if 'done' in current_step_data:
 +                                        f_out.write(f"done: {current_step_data['done']}\n")
-+                                    
++
 +                                    # Only write url and Payload when done=True
 +                                    if current_step_data.get('done', False):
 +                                        if 'url' in current_step_data and current_step_data['url']:
 +                                            f_out.write(f"url: {current_step_data['url']}\n")
 +                                        if 'payload' in current_step_data and current_step_data['payload']:
 +                                            f_out.write(f"Payload: {current_step_data['payload']}\n")
-+                                    
++
 +                                    # Write end separator
 +                                    f_out.write("----------------------------------------\n")
-+                                
++
 +                                # Reset for next step
 +                                in_step_log = False
 +                                current_step_data = {}
@@ -162,10 +163,10 @@ diff -ruN Link-main/compress_logs.py Modified-Link/compress_logs.py
 +                                payload_lines = []
 +                                in_payload = False
 +                                continue
-+                            
++
 +                            # Accumulate lines for this section
 +                            current_section_lines.append(line.rstrip('\n\r'))
-+                            
++
 +                            # Track payload lines (starts after "Payload:" and continues until separator)
 +                            if line.startswith('Payload:'):
 +                                in_payload = True
@@ -178,24 +179,24 @@ diff -ruN Link-main/compress_logs.py Modified-Link/compress_logs.py
 +                            elif in_payload:
 +                                # Continue accumulating payload lines until we hit the separator
 +                                payload_lines.append(line.rstrip('\n\r'))
-+        
++
 +        # Replace original file with compressed version if we used temp file
 +        if use_temp:
 +            if os.path.exists(output_file):
 +                os.remove(output_file)
 +            shutil.move(temp_output, output_file)
-+        
++
 +        # Get file sizes
 +        output_size = os.path.getsize(output_file)
 +        reduction = ((input_size - output_size) / input_size) * 100
-+        
++
 +        print(f"  Parsed {step_count} steps")
 +        print(f"  Original size: {input_size:,} bytes ({input_size / (1024*1024):.2f} MB)")
 +        print(f"  Compressed size: {output_size:,} bytes ({output_size / (1024*1024):.2f} MB)")
 +        print(f"  Reduction: {reduction:.1f}%")
-+        
++
 +        return True
-+        
++
 +    except Exception as e:
 +        # Clean up temp file on error
 +        if use_temp and os.path.exists(temp_output):
@@ -209,7 +210,7 @@ diff -ruN Link-main/compress_logs.py Modified-Link/compress_logs.py
 +def compress_all_logs(directory: str = '.', backup: bool = True, pattern: str = 'train-log-*.txt'):
 +    """
 +    Compress all log files matching the pattern.
-+    
++
 +    Args:
 +        directory: Directory to search for log files
 +        backup: Whether to create backups
@@ -217,31 +218,31 @@ diff -ruN Link-main/compress_logs.py Modified-Link/compress_logs.py
 +    """
 +    pattern_path = os.path.join(directory, pattern)
 +    log_files = glob.glob(pattern_path)
-+    
++
 +    # Filter out backup files
 +    log_files = [f for f in log_files if not f.endswith('.backup')]
-+    
++
 +    if not log_files:
 +        print(f"No log files found matching pattern: {pattern}")
 +        return
-+    
++
 +    print(f"Found {len(log_files)} log files to compress\n")
-+    
++
 +    total_original_size = 0
 +    total_compressed_size = 0
-+    
++
 +    for log_file in sorted(log_files):
 +        original_size = os.path.getsize(log_file)
 +        total_original_size += original_size
-+        
++
 +        success = compress_log_file(log_file, backup=backup)
-+        
++
 +        if success:
 +            compressed_size = os.path.getsize(log_file)
 +            total_compressed_size += compressed_size
-+        
++
 +        print()
-+    
++
 +    # Print summary
 +    if total_original_size > 0:
 +        total_reduction = ((total_original_size - total_compressed_size) / total_original_size) * 100
@@ -263,9 +264,9 @@ diff -ruN Link-main/compress_logs.py Modified-Link/compress_logs.py
 +        print("  --all: Compress all train-log-*.txt files in current directory")
 +        print("  --no-backup: Don't create backup files")
 +        sys.exit(1)
-+    
++
 +    backup = '--no-backup' not in sys.argv
-+    
++
 +    if sys.argv[1] == '--all':
 +        compress_all_logs(backup=backup)
 +    else:
@@ -273,7 +274,7 @@ diff -ruN Link-main/compress_logs.py Modified-Link/compress_logs.py
 +        if not os.path.exists(input_file):
 +            print(f"Error: File '{input_file}' not found.")
 +            sys.exit(1)
-+        
++
 +        compress_log_file(input_file, backup=backup)
 +
 +
@@ -282,7 +283,7 @@ diff -ruN Link-main/compress_logs.py Modified-Link/compress_logs.py
 +
 diff -ruN Link-main/environment.yaml Modified-Link/environment.yaml
 --- Link-main/environment.yaml	1970-01-01 01:00:00
-+++ Modified-Link/environment.yaml	2026-01-22 19:47:12
++++ Modified-Link/environment.yaml	2026-06-18 00:38:44
 @@ -0,0 +1,148 @@
 +name: link
 +channels:
@@ -442,7 +443,7 @@ Binary files Link-main/gym_reflected_xss/attack_module/attack/__pycache__/jspars
 Binary files Link-main/gym_reflected_xss/attack_module/attack/__pycache__/mod_xss.cpython-37.pyc and Modified-Link/gym_reflected_xss/attack_module/attack/__pycache__/mod_xss.cpython-37.pyc differ
 diff -ruN Link-main/gym_reflected_xss/attack_module/attack/mod_xss.py Modified-Link/gym_reflected_xss/attack_module/attack/mod_xss.py
 --- Link-main/gym_reflected_xss/attack_module/attack/mod_xss.py	2022-04-28 06:55:42
-+++ Modified-Link/gym_reflected_xss/attack_module/attack/mod_xss.py	2026-01-22 19:47:12
++++ Modified-Link/gym_reflected_xss/attack_module/attack/mod_xss.py	2026-06-18 00:38:44
 @@ -23,13 +23,13 @@
  from math import ceil
  from requests.exceptions import ReadTimeout
@@ -453,7 +454,7 @@ diff -ruN Link-main/gym_reflected_xss/attack_module/attack/mod_xss.py Modified-L
 +from .attack import Attack, Mutator, PayloadType, JSparser
 +from ..language.vulnerability import Vulnerability, Anomaly
 +from ..net.xss_utils import generate_payloads, valid_xss_content_type
- 
+
  from bs4 import BeautifulSoup
  import re
 -import gym_reflected_xss.envs.observation as obs
@@ -462,14 +463,14 @@ diff -ruN Link-main/gym_reflected_xss/attack_module/attack/mod_xss.py Modified-L
  from difflib import SequenceMatcher
  import difflib as dl
 @@ -85,7 +85,7 @@
-         options.add_argument('--no-sandbox')  
-         options.add_argument('--disable-dev-shm-usage') 
-         
+         options.add_argument('--no-sandbox')
+         options.add_argument('--disable-dev-shm-usage')
+
 -        self.driver = webdriver.Chrome(executable_path="/home/soyounglee/projects/gym-reflected-xss/chromedriver",options=options)
 +        self.driver = webdriver.Chrome(options=options)
-         
-     
- 
+
+
+
 @@ -272,8 +272,9 @@
          if indexPayload > 0:
              result_state[3] = 1
@@ -477,14 +478,14 @@ diff -ruN Link-main/gym_reflected_xss/attack_module/attack/mod_xss.py Modified-L
 +            payload_string = payload_string[1:len(payload_string)-2]
 +            indexPayload = original_content.find(payload_string)
              result_state[3] = 1
--        
+-
          sliced_original_content = original_content
          while indexPayload > 0:
              previous_list = result_state.copy()
 @@ -520,9 +521,7 @@
- 
+
      def attempt_exploit(self, method, payloads, original_request, parameter, taint, input_module, paramType=0):
-         
+
 -        # logger
 -        self.file.write("payload: " + str(payloads) + "\n")
 -        self.file.write("request: " + str(original_request)+ "\n")
@@ -502,20 +503,20 @@ diff -ruN Link-main/gym_reflected_xss/attack_module/attack/mod_xss.py Modified-L
 +        # Removed verbose logging
          if self.verbose == 2:
                  print("[¨] {0}".format(evil_request))
- 
+
 @@ -891,7 +888,6 @@
- 
- 
-         elif input_module.tag != "" and len(tag) == 0:  
--            
+
+
+         elif input_module.tag != "" and len(tag) == 0:
+-
              input_module.status[obs.TAG_INJECTED] = -1
-             
+
              str_response = response._response.text
 @@ -902,7 +898,6 @@
-                 
-        
+
+
          elif input_module.tag == "" and len(payload) > 0: # using value injection payload not whole html payload
--            
+-
              # print("effectivetag: " + str(input_module.effective_tag))
              #TODO
              event_list =["onClick", "onclick", "onerror", "onmouseover", "onload"]
@@ -525,7 +526,7 @@ diff -ruN Link-main/gym_reflected_xss/attack_module/attack/mod_xss.py Modified-L
                  if input_module.status[obs.JS_PAYLOAD] == 1:
 -
                      for e in event_list:
-                         
+
                          try:
 @@ -980,7 +974,6 @@
                              except KeyError:
@@ -547,8 +548,8 @@ diff -ruN Link-main/gym_reflected_xss/attack_module/attack/mod_xss.py Modified-L
 +                        input_module.status[obs.ATTACK_SUCCESS] = 1
 +                        break
 +
-             
-          
+
+
          # original tag 가 아닌 inejcted tag로 injection이 성공한 경우 -> attack fail
 Binary files Link-main/gym_reflected_xss/attack_module/language/__pycache__/__init__.cpython-37.pyc and Modified-Link/gym_reflected_xss/attack_module/language/__pycache__/__init__.cpython-37.pyc differ
 Binary files Link-main/gym_reflected_xss/attack_module/language/__pycache__/language.cpython-37.pyc and Modified-Link/gym_reflected_xss/attack_module/language/__pycache__/language.cpython-37.pyc differ
@@ -565,7 +566,7 @@ Binary files Link-main/gym_reflected_xss/attack_module/net/__pycache__/web.cpyth
 Binary files Link-main/gym_reflected_xss/attack_module/net/__pycache__/xss_utils.cpython-37.pyc and Modified-Link/gym_reflected_xss/attack_module/net/__pycache__/xss_utils.cpython-37.pyc differ
 diff -ruN Link-main/gym_reflected_xss/attack_module/net/crawler.py Modified-Link/gym_reflected_xss/attack_module/net/crawler.py
 --- Link-main/gym_reflected_xss/attack_module/net/crawler.py	2022-04-28 06:55:42
-+++ Modified-Link/gym_reflected_xss/attack_module/net/crawler.py	2026-01-22 19:47:12
++++ Modified-Link/gym_reflected_xss/attack_module/net/crawler.py	2026-06-18 00:38:44
 @@ -39,7 +39,6 @@
  # Third-parties
  import requests
@@ -592,29 +593,29 @@ Binary files Link-main/gym_reflected_xss/attack_module/net/jsparser/__pycache__/
 Binary files Link-main/gym_reflected_xss/attack_module/net/jsparser/__pycache__/jsparser3.cpython-37.pyc and Modified-Link/gym_reflected_xss/attack_module/net/jsparser/__pycache__/jsparser3.cpython-37.pyc differ
 diff -ruN Link-main/gym_reflected_xss/attack_module/net/sqlite_persister.py Modified-Link/gym_reflected_xss/attack_module/net/sqlite_persister.py
 --- Link-main/gym_reflected_xss/attack_module/net/sqlite_persister.py	2022-04-28 06:55:42
-+++ Modified-Link/gym_reflected_xss/attack_module/net/sqlite_persister.py	2026-01-22 19:47:12
++++ Modified-Link/gym_reflected_xss/attack_module/net/sqlite_persister.py	2026-06-18 00:38:44
 @@ -33,8 +33,7 @@
      """
- 
+
      CRAWLER_DATA_DIR_NAME = "scans"
 -    HOME_DIR = os.getenv("HOME") or os.getenv("USERPROFILE")
 -    BASE_DIR = os.path.join(HOME_DIR, ".wapiti")
 +    BASE_DIR = os.path.join("./", ".wapiti")
      CRAWLER_DATA_DIR = os.path.join(BASE_DIR, CRAWLER_DATA_DIR_NAME)
- 
+
      ROOT_URL = "rootURL"
 @@ -83,6 +82,11 @@
          self.depth = 0
          self.output_file = output_file
- 
+
 +        # Ensure the directory exists
 +        output_dir = os.path.dirname(self.output_file)
 +        if output_dir and not os.path.exists(output_dir):
 +            os.makedirs(output_dir, exist_ok=True)
-+        
++
          must_create = not os.path.exists(self.output_file)
          self._conn = sqlite3.connect(self.output_file)
- 
+
 Binary files Link-main/gym_reflected_xss/envs/__pycache__/__init__.cpython-36.pyc and Modified-Link/gym_reflected_xss/envs/__pycache__/__init__.cpython-36.pyc differ
 Binary files Link-main/gym_reflected_xss/envs/__pycache__/__init__.cpython-37.pyc and Modified-Link/gym_reflected_xss/envs/__pycache__/__init__.cpython-37.pyc differ
 Binary files Link-main/gym_reflected_xss/envs/__pycache__/action.cpython-37.pyc and Modified-Link/gym_reflected_xss/envs/__pycache__/action.cpython-37.pyc differ
@@ -623,7 +624,7 @@ Binary files Link-main/gym_reflected_xss/envs/__pycache__/reflected_xss_env.cpyt
 Binary files Link-main/gym_reflected_xss/envs/__pycache__/reflected_xss_env.cpython-37.pyc and Modified-Link/gym_reflected_xss/envs/__pycache__/reflected_xss_env.cpython-37.pyc differ
 diff -ruN Link-main/gym_reflected_xss/envs/action.py Modified-Link/gym_reflected_xss/envs/action.py
 --- Link-main/gym_reflected_xss/envs/action.py	2022-04-28 06:55:42
-+++ Modified-Link/gym_reflected_xss/envs/action.py	2026-01-22 19:47:12
++++ Modified-Link/gym_reflected_xss/envs/action.py	2026-06-18 00:38:44
 @@ -1,5 +1,5 @@
  ACTION_SIZE = 39
 -
@@ -648,15 +649,15 @@ diff -ruN Link-main/gym_reflected_xss/envs/action.py Modified-Link/gym_reflected
 +GENERATE_MEDIA_TAG_IMG = 43
 +GENERATE_MEDIA_TAG_AUDIO = 44
 +GENERATE_MEDIA_TAG_VIDEO = 45
- 
+
  # Mutation
  # Prefix
 diff -ruN Link-main/gym_reflected_xss/envs/observation.py Modified-Link/gym_reflected_xss/envs/observation.py
 --- Link-main/gym_reflected_xss/envs/observation.py	2022-04-28 06:55:42
-+++ Modified-Link/gym_reflected_xss/envs/observation.py	2026-01-22 19:47:12
++++ Modified-Link/gym_reflected_xss/envs/observation.py	2026-06-18 00:38:44
 @@ -1,5 +1,6 @@
  STATE_SIZE = 47
- 
+
 +DETERMINISTIC_STATE_SIZE = 53
  # Observation Space [0,1]
  # Input Payload
@@ -664,40 +665,40 @@ diff -ruN Link-main/gym_reflected_xss/envs/observation.py Modified-Link/gym_refl
 @@ -62,9 +63,16 @@
  # Attack Result
  ATTACK_SUCCESS = 46
- 
+
 +# Granular Deterministic Observations
 +# Specific Media Tag Details
 +HTML_IMG_TAG_USED = 47
 +HTML_AUDIO_TAG_USED = 48
 +HTML_VIDEO_TAG_USED = 49
 +HTML_LINK_TAG_USED = 50
- 
+
 -
 -
 +# Specific JavaScript Function Details
 +JS_PROMPT_USED = 51
 +JS_CONFIRM_USED = 52
- 
- 
- 
+
+
+
 diff -ruN Link-main/gym_reflected_xss/envs/reflected_xss_env.py Modified-Link/gym_reflected_xss/envs/reflected_xss_env.py
 --- Link-main/gym_reflected_xss/envs/reflected_xss_env.py	2022-04-28 06:55:42
-+++ Modified-Link/gym_reflected_xss/envs/reflected_xss_env.py	2026-01-22 19:47:12
++++ Modified-Link/gym_reflected_xss/envs/reflected_xss_env.py	2026-06-18 00:38:44
 @@ -32,8 +32,26 @@
  class ReflectedXSSEnv(gym.Env):
-    
- 
+
+
 -    def __init__(self, start_url="http://localhost:1234/", mode=0, log_file_name="train_log.txt", block_obs=-1):
-+    def __init__(self, start_url="http://localhost:1234/", 
-+            mode=0, 
-+            log_file_name="train_log.txt", 
-+            block_obs=-1, 
++    def __init__(self, start_url="http://localhost:1234/",
++            mode=0,
++            log_file_name="train_log.txt",
++            block_obs=-1,
 +            deterministic=False,
 +            deterministic_state=None,
 +            deterministic_action=None,
 +            max_steps_per_episode=30):
          self.mode = mode # 0: training mode 1: attack mode
-+        
++
 +        # Support both old API (deterministic) and new API (deterministic_state, deterministic_action)
 +        if deterministic_state is None and deterministic_action is None:
 +            # Backward compatibility: use deterministic for both
@@ -707,25 +708,25 @@ diff -ruN Link-main/gym_reflected_xss/envs/reflected_xss_env.py Modified-Link/gy
 +            # New API: separate control
 +            self.deterministic_state = deterministic_state if deterministic_state is not None else False
 +            self.deterministic_action = deterministic_action if deterministic_action is not None else False
-+        
++
          self.f = open(log_file_name, 'w')
          #self.f = None
          self.f2 = open("vul_detection", 'w')
 @@ -44,15 +62,15 @@
          self.root_url = start_url
          self.attack_module = AttackModule(self.root_url)
-         
+
 -        self.input_module = InputGenerator()
 +        self.input_module = InputGenerator(deterministic_state=self.deterministic_state, deterministic_action=self.deterministic_action)
-         
+
 -        self.max_try = 30
 +        self.max_try = max_steps_per_episode
          self.block_obs = block_obs
- 
+
 -        self.action_size = act.ACTION_SIZE
 +        self.action_size = act.ACTION_SIZE if not self.deterministic_action else act.DETERMINISTIC_ACTION_SIZE
          self.action_space = spaces.Discrete(self.action_size)
- 
+
 -        self.state_size = obs.STATE_SIZE
 +        self.state_size = obs.STATE_SIZE if not self.deterministic_state else obs.DETERMINISTIC_STATE_SIZE
          self.observation_space = spaces.Box(low=-1.0, high=float(self.max_try + 1), shape=(self.state_size,), dtype=np.float32)
@@ -741,32 +742,32 @@ diff -ruN Link-main/gym_reflected_xss/envs/reflected_xss_env.py Modified-Link/gy
                          self.attack_module.add_start_url(line)
                      url_file.close()
 @@ -323,15 +341,21 @@
- 
-                 
+
+
                  find_injection_point = False
 +                counter = 0
                  while not find_injection_point:
 +                    counter += 1
- 
+
 -                    if len(self.request_list) == 0:
 +                    if len(self.request_list) == 0 or counter >= 100:
 +                        print(self.request_list)
                          print("done")
                          quit()
- 
+
                      self.current_original_request = choiceFromRequestList()
-                     self.current_injection_points = self.mutator.mutate(self.current_original_request) 
+                     self.current_injection_points = self.mutator.mutate(self.current_original_request)
 -
 +                    if "Case25" in self.current_original_request.url  or \
 +                        "Case26" in self.current_original_request.url or \
-+                        "Case29" in self.current_original_request.url: # skip Case09 url, link cant solve it 
++                        "Case29" in self.current_original_request.url: # skip Case09 url, link cant solve it
 +                        continue
-                     # block logout url, out of scope url 
+                     # block logout url, out of scope url
                      #block = True
                      block = False
 @@ -388,12 +412,8 @@
      def step(self, action):
-         
+
          self.totalStepCounter += 1
 -        # logger
 +        # logger - minimal logging for parser
@@ -783,9 +784,9 @@ diff -ruN Link-main/gym_reflected_xss/envs/reflected_xss_env.py Modified-Link/gy
                  else:
                      method = "P"
 -                self.f.write("attack time: " + str(datetime.datetime.now()) + "\n")
-                 attack_success, status = xss_module.attempt_exploit(method, payloads, self.current_original_request, self.parameter, self.taint, self.input_module, self.paramType) 
-                 
-                 
+                 attack_success, status = xss_module.attempt_exploit(method, payloads, self.current_original_request, self.parameter, self.taint, self.input_module, self.paramType)
+
+
 @@ -452,7 +471,6 @@
                      method = "F"
                  else:
@@ -793,7 +794,7 @@ diff -ruN Link-main/gym_reflected_xss/envs/reflected_xss_env.py Modified-Link/gy
 -                self.f.write("attack time: " + str(datetime.datetime.now()) + "\n")
                  attack_success, status = xss_module.attempt_exploit(method, payloads, self.current_original_request, self.parameter, self.taint, self.input_module, self.paramType)
              except ReadTimeout:
-                 pass 
+                 pass
 @@ -512,7 +530,7 @@
              self.tried_request = False
              self.num_tried = 0
@@ -802,11 +803,11 @@ diff -ruN Link-main/gym_reflected_xss/envs/reflected_xss_env.py Modified-Link/gy
 +            self.input_module = InputGenerator(deterministic_state=self.deterministic_state, deterministic_action=self.deterministic_action)
              self.input_module.initialize_all_state()
              # print(self.num_steps_list)
-             
+
 @@ -521,9 +539,14 @@
          done = self._compute_done()
              # self.find_where_injected()
-         
+
 -        # logger
 -        self.f.write("state: " + str(self._observation) +"\n")
 -        # self.action_dict[str(action)] += 1
@@ -819,24 +820,24 @@ diff -ruN Link-main/gym_reflected_xss/envs/reflected_xss_env.py Modified-Link/gy
 +                self.f.write("url: " + str(self.current_original_request) + "\n")
 +            self.f.write("Payload: " + str(generated_input) +"\n")
          self.f.write("----------------------------------------\n")
-         
+
          #print("state: " + str(self._observation) +"\n")
 @@ -538,14 +561,18 @@
- 
+
          # find possible attack url (have relfected parameter)
          found = False
 -        while not found:
 +        count = 0
 +        while not found and count < 100:
 +            count += 1
- 
+
              self.pick_injection_url()
              self.attack_module.done = False
 -            self.input_module = InputGenerator()
 +            self.input_module = InputGenerator(deterministic_state=self.deterministic_state, deterministic_action=self.deterministic_action)
-             
+
              found = self.find_where_injected()
--        
+-
 +        if not found:
 +            print("find injection point failed")
 +            exit()
@@ -845,37 +846,37 @@ diff -ruN Link-main/gym_reflected_xss/envs/reflected_xss_env.py Modified-Link/gy
              if self.block_obs == 30 or self.block_obs == 31 or self.block_obs == 33:
 @@ -554,7 +581,7 @@
                  self.initial_status[self.block_obs] = 0
- 
+
          self._observation = self.initial_status
 -        print(self.initial_status)
 +        #print(self.initial_status)
          self.input_module.status = self.initial_status
-         
+
          return self._observation
 @@ -593,7 +620,7 @@
      def find_where_injected(self):
-         
+
          found = False
 -        print("url: "  + str(self.current_original_request.url))
 +        #print("url: "  + str(self.current_original_request.url))
          self.initial_status = np.array([0.0] * self.state_size)
          xss_module = self.attack_module.xss_module
-         
+
 @@ -607,7 +634,6 @@
-         if len(self.flags) == 0: 
+         if len(self.flags) == 0:
              self.flags.add(PayloadType.get)
- 
+
 -        self.f.write("attack time: " + str(datetime.datetime.now()) + "\n")
          if "email" in self.parameter:
              payloads = ("1209@0727", self.flags)
          else:
 @@ -636,7 +662,6 @@
- 
+
          else:
-             
+
 -            self.f.write("attack time: " + str(datetime.datetime.now()) + "\n")
              payloads = ('"' + "/" + "'" +  "injectionhere0727", self.flags)
-                 
+
              if PayloadType.get in self.flags:
 @@ -674,7 +699,6 @@
              payloads = ("'" + "</script>"+ '"' +"alert" + "injectionhere0727" , self.flags)
@@ -886,8 +887,8 @@ diff -ruN Link-main/gym_reflected_xss/envs/reflected_xss_env.py Modified-Link/gy
                  found = True
                  self.initial_status[obs.FIRST_MAGIC_STRING] = 1
 @@ -684,7 +708,6 @@
-                 
-                 
+
+
              else:
 -                self.f.write("attack time: " + str(datetime.datetime.now()) + "\n")
                  payloads = ("/" + "'" + '"' + "alert" + "injectionhere0727", self.flags)
@@ -899,11 +900,11 @@ Binary files Link-main/gym_reflected_xss/input_module/__pycache__/input_generato
 Binary files Link-main/gym_reflected_xss/input_module/__pycache__/pyjsfuck.cpython-37.pyc and Modified-Link/gym_reflected_xss/input_module/__pycache__/pyjsfuck.cpython-37.pyc differ
 diff -ruN Link-main/gym_reflected_xss/input_module/input_generator.py Modified-Link/gym_reflected_xss/input_module/input_generator.py
 --- Link-main/gym_reflected_xss/input_module/input_generator.py	2022-04-28 06:55:42
-+++ Modified-Link/gym_reflected_xss/input_module/input_generator.py	2026-01-22 19:47:12
++++ Modified-Link/gym_reflected_xss/input_module/input_generator.py	2026-06-18 00:38:44
 @@ -9,9 +9,20 @@
- import random 
+ import random
  class InputGenerator():
- 
+
 -    def __init__(self):
 -        # define element of attack payload
 -        self.INITIAL_STATUS = np.array([0.0] * obs.STATE_SIZE)
@@ -917,7 +918,7 @@ diff -ruN Link-main/gym_reflected_xss/input_module/input_generator.py Modified-L
 +            # New API: separate control
 +            self.deterministic_state = deterministic_state if deterministic_state is not None else False
 +            self.deterministic_action = deterministic_action if deterministic_action is not None else False
-+        
++
 +        # Use appropriate state size based on deterministic_state mode
 +        state_size = obs.DETERMINISTIC_STATE_SIZE if self.deterministic_state else obs.STATE_SIZE
 +        self.INITIAL_STATUS = np.array([0.0] * state_size)
@@ -934,7 +935,7 @@ diff -ruN Link-main/gym_reflected_xss/input_module/input_generator.py Modified-L
 +            self.random_tag = str(10000 + (action % 10000))
 +        else:
 +            self.random_tag = str(random.randint(10000,20000))
- 
+
          self.previous_action = self.current_action
          self.current_action = action
 @@ -79,7 +94,7 @@
@@ -943,20 +944,20 @@ diff -ruN Link-main/gym_reflected_xss/input_module/input_generator.py Modified-L
              self.original_tag = ""
 -            self.action_1()
 +            self.action_1(action)
-         
-         elif action == act.PATTERN3_PAYLOAD: 
+
+         elif action == act.PATTERN3_PAYLOAD:
              self.use_saved_tag = False
 @@ -93,15 +108,46 @@
-             self.prefix = "/> " 
+             self.prefix = "/> "
              pass
- 
+
 -        elif action == act.MUTATE_HTML_TAG:
-+        elif action == act.MUTATE_HTML_TAG or action in [act.DETERMINISTIC_MEDIA_TAG_IMG, 
-+                                                            act.DETERMINISTIC_MEDIA_TAG_AUDIO, 
-+                                                            act.DETERMINISTIC_MEDIA_TAG_VIDEO, 
++        elif action == act.MUTATE_HTML_TAG or action in [act.DETERMINISTIC_MEDIA_TAG_IMG,
++                                                            act.DETERMINISTIC_MEDIA_TAG_AUDIO,
++                                                            act.DETERMINISTIC_MEDIA_TAG_VIDEO,
 +                                                            act.DETERMINISTIC_LINK_TAG_A]:
              self.original_tag = ""
- 
+
              if self.tag == "script":
 -                self.action_1()
 +                self.action_1(action)
@@ -994,15 +995,15 @@ diff -ruN Link-main/gym_reflected_xss/input_module/input_generator.py Modified-L
 +                        self.tag = self.linkTag[action % len(self.linkTag)]
 +                else:
 +                    self.tag = choice(self.linkTag)
- 
+
          elif action == act.MUTATE_PREFIX_DOUBLE_QUOTE:
-             self.prefix = '" ' 
+             self.prefix = '" '
 @@ -294,9 +340,25 @@
          elif action == act.WHITE_SPACE_TO_SLASH:
              self.status[obs.NO_WHITE_SPACE] = 1
- 
+
 -        elif action == act.MUTATE_JAVA_SCRIPT:
-+        elif action == act.MUTATE_JAVA_SCRIPT or action in [act.DETERMINISTIC_JS_PROMPT, 
++        elif action == act.MUTATE_JAVA_SCRIPT or action in [act.DETERMINISTIC_JS_PROMPT,
 +                                                            act.DETERMINISTIC_JS_CONFIRM]:
              if self.status[obs.JS_PAYLOAD] == 1:
 -                self.value = choice(["prompt(1)", "confirm(1)"])
@@ -1022,8 +1023,8 @@ diff -ruN Link-main/gym_reflected_xss/input_module/input_generator.py Modified-L
 +                        self.value = js_options[action % len(js_options)]
 +                else:
 +                    self.value = choice(["prompt(1)", "confirm(1)"])
- 
- 
+
+
          elif action == act.DIVIDE_JAVASCRIPT:
 @@ -326,7 +388,12 @@
          generated_input =""
@@ -1041,8 +1042,8 @@ diff -ruN Link-main/gym_reflected_xss/input_module/input_generator.py Modified-L
                  generated_input = ''.join([self.prefix , self.forebracket1 , self.tag])
 @@ -503,12 +570,33 @@
          self.status[obs.NO_WHITE_SPACE] = 0
- 
- 
+
+
 -    def action_1(self):
 +    def action_1(self, action):
          self.init_status()
@@ -1071,14 +1072,14 @@ diff -ruN Link-main/gym_reflected_xss/input_module/input_generator.py Modified-L
 +        else:
 +            self.tag = choice(self.mediaTag)
 +            self.event = choice(self.htmlevent)
-         self.attribute = "src" 
+         self.attribute = "src"
 -        self.event = choice(self.htmlevent)
          self.value = self.JSPayload
-         self.suffix = ""  
+         self.suffix = ""
          self.status[obs.HTML_TAG_USED] = 1
 diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 --- Link-main/parse_train_log.py	1970-01-01 01:00:00
-+++ Modified-Link/parse_train_log.py	2026-01-22 19:47:12
++++ Modified-Link/parse_train_log.py	2026-06-18 00:38:44
 @@ -0,0 +1,954 @@
 +#!/usr/bin/env python3
 +"""
@@ -1128,7 +1129,7 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +    n: int = 0
 +    mean: float = 0.0
 +    M2: float = 0.0  # Sum of squared differences from mean
-+    
++
 +    def update(self, value: float):
 +        """Add a new value and update running statistics."""
 +        self.n += 1
@@ -1136,7 +1137,7 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +        self.mean += delta / self.n
 +        delta2 = value - self.mean
 +        self.M2 += delta * delta2
-+    
++
 +    def get_std(self) -> float:
 +        """Return population standard deviation."""
 +        if self.n < 1:
@@ -1154,16 +1155,16 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +    final_try: Optional[int] = None
 +    final_url: Optional[str] = None
 +    final_payload: Optional[str] = None
-+    
-+    def add_step(self, reward: float, try_value: Optional[int], url: Optional[str] = None, 
++
++    def add_step(self, reward: float, try_value: Optional[int], url: Optional[str] = None,
 +                 payload: Optional[str] = None, done: bool = False):
 +        """Add a step's data to the episode accumulator."""
 +        self.length += 1
 +        self.reward_stats.update(reward)
-+        
++
 +        if try_value is not None:
 +            self.final_try = try_value
-+        
++
 +        # Track successful vulnerabilities (reward > 0)
 +        if reward > 0:
 +            vuln_type = extract_vulnerability_type_from_url(url) if url else "unknown"
@@ -1173,11 +1174,11 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +                'url': url or '',
 +                'payload': payload or ''
 +            })
-+        
++
 +        if done:
 +            self.final_url = url
 +            self.final_payload = payload
-+    
++
 +    def finalize(self) -> dict:
 +        """Return episode statistics as a dictionary."""
 +        return {
@@ -1206,11 +1207,11 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +def parse_train_log(file_path: str) -> pd.DataFrame:
 +    """
 +    Parse a train-log file memory-efficiently, computing episode stats incrementally.
-+    
++
 +    Returns a DataFrame with one row per successful vulnerability (reward > 0):
 +    - reward: float (the successful reward value)
 +    - EpsTaken: int (number of episodes taken to find this vulnerability, 1-indexed)
-+    - episode_avg_reward: float  
++    - episode_avg_reward: float
 +    - episode_std_reward: float
 +    - vuln_type: str (extracted from URL)
 +    - url: str
@@ -1222,52 +1223,52 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +    episode_id = 0
 +    episode = EpisodeAccumulator()
 +    episode.episode_id = episode_id
-+    
++
 +    in_step_log = False
 +    current_section_lines = []
 +    payload_lines = []
 +    in_payload = False
-+    
++
 +    step_log_pattern = re.compile(r'-+step log-+')
 +    separator_pattern = re.compile(r'-{10,}')
-+    
++
 +    source_file = os.path.basename(file_path)
 +    file_size = os.path.getsize(file_path)
-+    
++
 +    with open(file_path, 'r', encoding='utf-8') as f:
 +        with tqdm(total=file_size, unit='B', unit_scale=True, unit_divisor=1024,
 +                  desc=f"Processing {source_file}", leave=False) as pbar:
 +            for line in f:
 +                pbar.update(len(line.encode('utf-8')))
-+                
++
 +                if step_log_pattern.match(line.strip()):
 +                    in_step_log = True
 +                    current_section_lines = []
 +                    payload_lines = []
 +                    in_payload = False
 +                    continue
-+                
++
 +                if in_step_log:
 +                    if separator_pattern.match(line.strip()):
 +                        # Process accumulated section
 +                        section_text = '\n'.join(current_section_lines)
-+                        
++
 +                        # Extract values
 +                        reward = 0.0
 +                        reward_match = re.search(r'reward:\s*([-\d.]+)', section_text)
 +                        if reward_match:
 +                            reward = float(reward_match.group(1))
-+                        
++
 +                        done = False
 +                        done_match = re.search(r'done:\s*(True|False)', section_text)
 +                        if done_match:
 +                            done = done_match.group(1) == 'True'
-+                        
++
 +                        try_value = None
 +                        try_match = re.search(r'try:\s*(\d+)', section_text)
 +                        if try_match:
 +                            try_value = int(try_match.group(1))
-+                        
++
 +                        url = None
 +                        payload = None
 +                        if done:
@@ -1276,14 +1277,14 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +                                url = url_match.group(1).strip()
 +                            if payload_lines:
 +                                payload = ''.join(payload_lines).strip().rstrip('\n\r')
-+                        
++
 +                        # Add step to episode accumulator
 +                        episode.add_step(reward, try_value, url, payload, done)
-+                        
++
 +                        # If episode ended, finalize and store successes
 +                        if done:
 +                            ep_stats = episode.finalize()
-+                            
++
 +                            # Store each success with episode context
 +                            for success in episode.successes:
 +                                successes.append({
@@ -1298,20 +1299,20 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +                                    'try_value': ep_stats['final_try'],
 +                                    'source_file': source_file
 +                                })
-+                            
++
 +                            # Reset for next episode
 +                            episode_id += 1
 +                            episode = EpisodeAccumulator()
 +                            episode.episode_id = episode_id
-+                        
++
 +                        in_step_log = False
 +                        current_section_lines = []
 +                        payload_lines = []
 +                        in_payload = False
 +                        continue
-+                    
++
 +                    current_section_lines.append(line.rstrip('\n\r'))
-+                    
++
 +                    if line.startswith('Payload:'):
 +                        in_payload = True
 +                        payload_match = re.match(r'Payload:\s*(.*)', line)
@@ -1319,7 +1320,7 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +                            payload_lines.append(payload_match.group(1))
 +                    elif in_payload:
 +                        payload_lines.append(line.rstrip('\n\r'))
-+    
++
 +    # Handle last episode if it didn't end with done=True
 +    if episode.length > 0:
 +        ep_stats = episode.finalize()
@@ -1336,26 +1337,26 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +                'try_value': ep_stats['final_try'],
 +                'source_file': source_file
 +            })
-+    
++
 +    return pd.DataFrame(successes)
 +
 +
 +def parse_all_files(file_list: List[str], category_name: str) -> Tuple[pd.DataFrame, List[str]]:
 +    """Parse multiple train-log files and combine results into a single DataFrame.
-+    
++
 +    Returns:
 +        Tuple of (combined DataFrame, list of all parsed file names)
 +    """
 +    dfs = []
 +    all_parsed_files = []  # Track all files, even those with no vulns
-+    
++
 +    for file_path in file_list:
 +        try:
 +            source_name = os.path.basename(file_path)
 +            print(f"  Parsing {source_name}...")
 +            df = parse_train_log(file_path)
 +            all_parsed_files.append(source_name)  # Track this file
-+            
++
 +            if not df.empty:
 +                dfs.append(df)
 +                print(f"    Found {len(df)} successful vulnerabilities")
@@ -1364,7 +1365,7 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +        except Exception as e:
 +            print(f"    Error parsing {file_path}: {e}")
 +            continue
-+    
++
 +    if dfs:
 +        return pd.concat(dfs, ignore_index=True), all_parsed_files
 +    return pd.DataFrame(), all_parsed_files
@@ -1380,19 +1381,19 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +def calculate_95_ci(series: pd.Series) -> Tuple[float, float]:
 +    """
 +    Calculate 95% confidence interval for the mean.
-+    
++
 +    Returns (mean, ci_half_width) where the interval is [mean - ci, mean + ci]
 +    Uses z=1.96 for 95% confidence.
 +    """
 +    if series.empty or len(series) < 2:
 +        return (series.mean() if not series.empty else 0.0, 0.0)
-+    
++
 +    n = len(series)
 +    mean = series.mean()
 +    std = series.std(ddof=1)  # Sample std dev for CI calculation
 +    se = std / math.sqrt(n)   # Standard error
 +    ci = 1.96 * se            # 95% CI half-width
-+    
++
 +    return (float(mean), float(ci))
 +
 +
@@ -1406,17 +1407,17 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +def calculate_proportion_ci(successes: int, total: int) -> Tuple[float, float, float]:
 +    """
 +    Calculate 95% confidence interval for a proportion using Wilson score interval.
-+    
++
 +    Args:
 +        successes: Number of runs where vulnerability was found
 +        total: Total number of runs
-+    
++
 +    Returns:
 +        (proportion, ci_lower, ci_upper) - the proportion and 95% CI bounds
 +    """
 +    if total == 0:
 +        return (0.0, 0.0, 0.0)
-+    
++
 +    data = [0 for _ in range(total)]
 +    for i in range(successes):
 +        data[i] = 1
@@ -1427,14 +1428,14 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +    confidence=0.95
 +    mean = np.mean(data)
 +    std_err = scipy_stats.sem(data)  # Standard error of the mean
-+    
++
 +    # Use t-distribution for small samples
 +    t_value = scipy_stats.t.ppf((1 + confidence) / 2, n - 1)
 +    margin_of_error = t_value * std_err
-+    
++
 +    ci_lower = mean - margin_of_error
 +    ci_upper = mean + margin_of_error
-+    
++
 +    return (mean, ci_lower, ci_upper)
 +
 +
@@ -1442,10 +1443,10 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +    """Format discovery rate as 'X/Y (p% [CI])' for LaTeX output."""
 +    if total == 0:
 +        return "N/A"
-+    
++
 +    p, ci_lower, ci_upper = calculate_proportion_ci(successes, total)
 +
-+    
++
 +    if include_ci:
 +        return f"{successes}/{total} ({p*100:.1f}\\% [{ci_lower*100:.1f}\\%-{ci_upper*100:.1f}\\%])"
 +    return f"{successes}/{total} ({p*100:.1f}\\%)"
@@ -1454,18 +1455,18 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +def calculate_discovery_stats(df: pd.DataFrame) -> dict:
 +    """
 +    Calculate discovery statistics: how many runs found each vulnerability type.
-+    
++
 +    Returns a dict with:
 +        - total_runs: int
 +        - vuln_discovery: {vuln_type: {'runs_found': int, 'total_runs': int}}
 +    """
 +    if df.empty:
 +        return {'total_runs': 0, 'vuln_discovery': {}}
-+    
++
 +    # Get unique runs (source files)
 +    all_runs = df['source_file'].unique()
 +    total_runs = len(all_runs)
-+    
++
 +    # For each vulnerability type, count how many unique runs found it
 +    vuln_discovery = {}
 +    for vuln_type in df['vuln_type'].unique():
@@ -1475,7 +1476,7 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +            'runs_found': runs_with_vuln,
 +            'total_runs': total_runs
 +        }
-+    
++
 +    return {
 +        'total_runs': total_runs,
 +        'vuln_discovery': vuln_discovery
@@ -1487,21 +1488,21 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +    if df.empty:
 +        print("No successful vulnerabilities to analyze")
 +        return
-+    
++
 +    # Calculate 95% CI for EpsTaken across unique episodes with vulnerabilities
 +    unique_episodes = df.drop_duplicates(subset=['episode_id', 'source_file'])
 +    eps_taken_mean, eps_taken_ci = calculate_95_ci(unique_episodes['EpsTaken'])
-+    
++
 +    # Calculate 95% CI for rewards
 +    reward_mean, reward_ci = calculate_95_ci(df['reward'])
-+    
-+    # Calculate 95% CI for episode avg rewards  
++
++    # Calculate 95% CI for episode avg rewards
 +    ep_reward_mean, ep_reward_ci = calculate_95_ci(df['episode_avg_reward'])
-+    
++
 +    # Calculate discovery stats
 +    discovery_stats = calculate_discovery_stats(df)
 +    total_runs = discovery_stats['total_runs']
-+    
++
 +    output_file = f"{output_prefix}_vulnerability_stats.tex"
 +    with open(output_file, 'w', encoding='utf-8') as f:
 +        f.write("\\begin{table}[h]\n")
@@ -1516,7 +1517,7 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +        f.write(f"Episode Average Reward & {format_with_ci(ep_reward_mean, ep_reward_ci, 4)} \\\\\n")
 +        f.write(f"EpsTaken & {format_with_ci(eps_taken_mean, eps_taken_ci, 1)} \\\\\n")
 +        f.write("\\hline\n")
-+        
++
 +        # Add per-vulnerability discovery rates
 +        if discovery_stats['vuln_discovery']:
 +            f.write("\\multicolumn{2}{|c|}{\\textbf{Discovery Rate by Vulnerability Type}} \\\\\n")
@@ -1526,17 +1527,17 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +                p, ci_lower, ci_upper = calculate_proportion_ci(runs_found, total_runs)
 +                f.write(f"{vuln_type} & {runs_found}/{total_runs} ({p*100:.1f}\\% [{ci_lower*100:.1f}\\%-{ci_upper*100:.1f}\\%]) \\\\\n")
 +            f.write("\\hline\n")
-+        
++
 +        f.write("\\end{tabular}\n")
 +        f.write("\\caption{Vulnerability Statistics with 95\\% Confidence Intervals}\n")
 +        f.write("\\end{table}\n")
-+    
++
 +    print(f"Saved vulnerability statistics table: {output_file}")
 +    print(f"  Total runs: {total_runs}")
 +    print(f"  Found {len(df)} successful vulnerabilities (reward > 0)")
 +    print(f"  Average reward: {reward_mean:.4f} ± {reward_ci:.4f} (95% CI)")
 +    print(f"  EpsTaken: {eps_taken_mean:.1f} ± {eps_taken_ci:.1f} (95% CI)")
-+    
++
 +    # Print discovery rates
 +    if discovery_stats['vuln_discovery']:
 +        print(f"  Discovery rates by vulnerability type:")
@@ -1548,7 +1549,7 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +
 +def generate_combined_vulnerability_table(file_type_data: dict, output_file: str = 'combined_vulnerability_stats.tex'):
 +    """Generate a single combined LaTeX table with file types as rows and vulnerabilities as columns.
-+    
++
 +    All statistics include 95% confidence intervals.
 +    Includes discovery rate: proportion of runs that found each vulnerability.
 +    """
@@ -1559,50 +1560,50 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +            df = df.copy()
 +            df['file_type'] = file_type
 +            all_dfs.append(df)
-+    
++
 +    if not all_dfs:
 +        print("No data to generate combined table.")
 +        return
-+    
++
 +    combined_df = pd.concat(all_dfs, ignore_index=True)
-+    
++
 +    # Get unique file types and vulnerability types
 +    file_types = sorted(combined_df['file_type'].unique())
 +    vulnerability_types = sorted(combined_df['vuln_type'].unique())
-+    
++
 +    # Build rows for the output table
 +    rows = []
 +    for file_type in file_types:
 +        ft_df = combined_df[combined_df['file_type'] == file_type]
-+        
++
 +        # Get total number of runs for this file type
 +        total_runs = ft_df['source_file'].nunique()
-+        
++
 +        avg_reward_row = {'File Type': file_type, 'Metric': 'Average Reward (95\\% CI)'}
 +        eps_taken_row = {'File Type': file_type, 'Metric': 'EpsTaken (95\\% CI)'}
 +        count_row = {'File Type': file_type, 'Metric': 'Count'}
 +        discovery_row = {'File Type': file_type, 'Metric': 'Discovery Rate (95\\% CI)'}
-+        
++
 +        all_rewards = []
 +        all_eps_taken = []
 +        total_vulns_found_across_runs = 0  # Track unique vuln types found in any run
-+        
++
 +        for vuln_type in vulnerability_types:
 +            vt_df = ft_df[ft_df['vuln_type'] == vuln_type]
-+            
++
 +            if not vt_df.empty:
 +                # Calculate 95% CI for reward
 +                reward_mean, reward_ci = calculate_95_ci(vt_df['reward'])
 +                avg_reward_row[vuln_type] = format_with_ci(reward_mean, reward_ci, 2)
 +                all_rewards.extend(vt_df['reward'].tolist())
-+                
++
 +                # Calculate 95% CI for EpsTaken
 +                eps_mean, eps_ci = calculate_95_ci(vt_df['EpsTaken'])
 +                eps_taken_row[vuln_type] = format_with_ci(eps_mean, eps_ci, 1)
 +                all_eps_taken.extend(vt_df['EpsTaken'].tolist())
-+                
++
 +                count_row[vuln_type] = str(len(vt_df))
-+                
++
 +                # Discovery rate: how many runs found this vulnerability
 +                runs_found = vt_df['source_file'].nunique()
 +                discovery_row[vuln_type] = format_discovery_rate(runs_found, total_runs)
@@ -1612,22 +1613,22 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +                eps_taken_row[vuln_type] = "N/A"
 +                count_row[vuln_type] = "0"
 +                discovery_row[vuln_type] = format_discovery_rate(0, total_runs)
-+        
++
 +        # Summary column with 95% CI
 +        if all_rewards:
 +            summary_mean, summary_ci = calculate_95_ci(pd.Series(all_rewards))
 +            avg_reward_row['Summary'] = format_with_ci(summary_mean, summary_ci, 2)
 +        else:
 +            avg_reward_row['Summary'] = "N/A"
-+        
++
 +        if all_eps_taken:
 +            summary_eps, summary_ci_eps = calculate_95_ci(pd.Series(all_eps_taken))
 +            eps_taken_row['Summary'] = format_with_ci(summary_eps, summary_ci_eps, 1)
 +        else:
 +            eps_taken_row['Summary'] = "N/A"
-+        
++
 +        count_row['Summary'] = str(len(ft_df))
-+        
++
 +        # Summary discovery rate: average number of vulnerabilities found per run
 +        # For each run, count how many unique vulnerability types were found
 +        # Then average across all runs and show with CI
@@ -1639,11 +1640,11 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +                run_df = ft_df[ft_df['source_file'] == source_file]
 +                vulns_found_in_run = run_df['vuln_type'].nunique()
 +                vulns_per_run.append(vulns_found_in_run)
-+            
++
 +            # Calculate mean and CI
 +            vulns_series = pd.Series(vulns_per_run)
 +            avg_vulns, ci_half = calculate_95_ci(vulns_series)
-+            
++
 +            # Format as "avg/total (percentage [CI])"
 +            pct = (avg_vulns / num_vuln_types) * 100
 +            pct_lower = ((avg_vulns - ci_half) / num_vuln_types) * 100
@@ -1651,26 +1652,26 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +            discovery_row['Summary'] = f"{avg_vulns:.1f}/{num_vuln_types} ({pct:.1f}\\% [{max(0,pct_lower):.1f}\\%-{min(100,pct_upper):.1f}\\%])"
 +        else:
 +            discovery_row['Summary'] = "N/A"
-+        
++
 +        rows.append(avg_reward_row)
 +        rows.append(eps_taken_row)
 +        rows.append(count_row)
 +        rows.append(discovery_row)
-+    
++
 +    # Create output DataFrame and generate LaTeX
 +    output_df = pd.DataFrame(rows)
 +    output_df = output_df.set_index(['File Type', 'Metric'])
-+    
++
 +    latex_str = output_df.to_latex(
 +        escape=False,
 +        float_format="%.2f",
 +        caption="Vulnerability Statistics by File Type and Vulnerability Type (with 95\\% CI)",
 +        label="tab:vulnerability_stats"
 +    )
-+    
++
 +    with open(output_file, 'w', encoding='utf-8') as f:
 +        f.write(latex_str)
-+    
++
 +    print(f"Saved combined vulnerability statistics table: {output_file}")
 +    print(f"  File types: {', '.join(file_types)}")
 +    print(f"  Vulnerability types: {', '.join(vulnerability_types)}")
@@ -1683,7 +1684,7 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +    if df.empty:
 +        print("No data to export.")
 +        return
-+    
++
 +    df.to_csv(output_file, index=False)
 +    print(f"Exported {len(df)} successful vulnerabilities to {output_file}")
 +
@@ -1691,16 +1692,16 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +def generate_vulnerability_matrix(file_type_data: dict, all_files_data: dict = None, output_file: str = 'vulns_out.pkl'):
 +    """
 +    Generate a 2D vulnerability matrix DataFrame.
-+    
++
 +    Rows: Individual runs (source files), grouped by file type
 +    Columns: Vulnerability types (1 if found, 0 if not found)
-+    
++
 +    Args:
 +        file_type_data: Dict mapping file type names to DataFrames
 +        all_files_data: Dict mapping file type names to list of ALL parsed file names
 +                       (includes files with no vulnerabilities found)
 +        output_file: Output pickle file path
-+    
++
 +    Returns:
 +        DataFrame with the vulnerability matrix
 +    """
@@ -1711,27 +1712,27 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +            df = df.copy()
 +            df['file_type'] = file_type
 +            all_dfs.append(df)
-+    
++
 +    if not all_dfs:
 +        print("No data to generate vulnerability matrix.")
 +        return pd.DataFrame()
-+    
++
 +    combined_df = pd.concat(all_dfs, ignore_index=True)
-+    
++
 +    # Get all unique vulnerability types
 +    all_vuln_types = sorted(combined_df['vuln_type'].unique())
-+    
++
 +    # Build the matrix: rows are (file_type, source_file), columns are vulnerability types
 +    rows = []
-+    
++
 +    # If all_files_data is provided, use it to include ALL files (even those with 0 vulns)
 +    if all_files_data:
 +        for file_type, file_list in all_files_data.items():
 +            if not file_list:
 +                continue
-+            
++
 +            ft_df = combined_df[combined_df['file_type'] == file_type] if not combined_df.empty else pd.DataFrame()
-+            
++
 +            for source_file in sorted(file_list):
 +                # Check what vulns were found in this run
 +                if not ft_df.empty:
@@ -1739,71 +1740,71 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +                    vulns_found_in_run = set(run_df['vuln_type'].unique()) if not run_df.empty else set()
 +                else:
 +                    vulns_found_in_run = set()
-+                
++
 +                row = {
 +                    'file_type': file_type,
 +                    'source_file': source_file
 +                }
-+                
++
 +                # Mark each vulnerability as 1 (found) or 0 (not found)
 +                for vuln_type in all_vuln_types:
 +                    row[vuln_type] = 1 if vuln_type in vulns_found_in_run else 0
-+                
++
 +                rows.append(row)
 +    else:
 +        # Fallback: only include files that have at least one vulnerability
 +        for file_type in sorted(combined_df['file_type'].unique()):
 +            ft_df = combined_df[combined_df['file_type'] == file_type]
-+            
++
 +            for source_file in sorted(ft_df['source_file'].unique()):
 +                run_df = ft_df[ft_df['source_file'] == source_file]
 +                vulns_found_in_run = set(run_df['vuln_type'].unique())
-+                
++
 +                row = {
 +                    'file_type': file_type,
 +                    'source_file': source_file
 +                }
-+                
++
 +                for vuln_type in all_vuln_types:
 +                    row[vuln_type] = 1 if vuln_type in vulns_found_in_run else 0
-+                
++
 +                rows.append(row)
-+    
++
 +    # Create DataFrame
 +    matrix_df = pd.DataFrame(rows)
-+    
++
 +    if matrix_df.empty:
 +        print("No runs to include in vulnerability matrix.")
 +        return pd.DataFrame()
-+    
++
 +    # Set multi-index for grouping
 +    matrix_df = matrix_df.set_index(['file_type', 'source_file'])
-+    
++
 +    # Save to pickle
 +    matrix_df.to_pickle(output_file)
 +    print(f"Saved vulnerability matrix: {output_file}")
 +    print(f"  Shape: {matrix_df.shape[0]} runs x {matrix_df.shape[1]} vulnerability types")
-+    
++
 +    # Count runs per file type
 +    file_type_counts = matrix_df.reset_index()['file_type'].value_counts().sort_index()
 +    print(f"  Runs per file type: {dict(file_type_counts)}")
-+    
++
 +    # Also save as CSV for easy viewing
 +    csv_file = output_file.replace('.pkl', '.csv')
 +    matrix_df.to_csv(csv_file)
 +    print(f"  Also saved as CSV: {csv_file}")
-+    
++
 +    return matrix_df
 +
 +
 +def load_from_csv(csv_file: str) -> pd.DataFrame:
 +    """
 +    Load DataFrame from CSV file and ensure it has EpsTaken column.
-+    
++
 +    If the CSV has episode_length instead of EpsTaken, compute EpsTaken from episode_id.
 +    """
 +    df = pd.read_csv(csv_file)
-+    
++
 +    # Check if EpsTaken exists, if not compute it from episode_id
 +    if 'EpsTaken' not in df.columns:
 +        if 'episode_id' in df.columns:
@@ -1819,11 +1820,11 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +        else:
 +            print(f"  Warning: {os.path.basename(csv_file)} has neither EpsTaken nor episode_id/episode_length")
 +            df['EpsTaken'] = 1
-+    
++
 +    # Remove episode_length if it exists (we're using EpsTaken now)
 +    if 'episode_length' in df.columns:
 +        df = df.drop(columns=['episode_length'])
-+    
++
 +    return df
 +
 +
@@ -1831,12 +1832,12 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +    """Find all train-log-* files and categorize them into 'd', 'non-d', 'da', and 'ds' groups."""
 +    pattern = os.path.join(directory, 'train-log-*')
 +    all_files = glob.glob(pattern)
-+    
++
 +    d_files = []
 +    non_d_files = []
 +    da_files = []
 +    ds_files = []
-+    
++
 +    for file_path in sorted(all_files):
 +        if file_path.endswith('-da.txt'):
 +            da_files.append(file_path)
@@ -1846,7 +1847,7 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +            d_files.append(file_path)
 +        elif file_path.endswith('-non-d.txt'):
 +            non_d_files.append(file_path)
-+    
++
 +    return d_files, non_d_files, da_files, ds_files
 +
 +
@@ -1856,12 +1857,12 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +    non_d_csv = os.path.join(directory, 'train-log-non-d_combined.csv')
 +    da_csv = os.path.join(directory, 'train-log-da_combined.csv')
 +    ds_csv = os.path.join(directory, 'train-log-ds_combined.csv')
-+    
++
 +    d_file = d_csv if os.path.exists(d_csv) else None
 +    non_d_file = non_d_csv if os.path.exists(non_d_csv) else None
 +    da_file = da_csv if os.path.exists(da_csv) else None
 +    ds_file = ds_csv if os.path.exists(ds_csv) else None
-+    
++
 +    return d_file, non_d_file, da_file, ds_file
 +
 +
@@ -1873,43 +1874,43 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +        args_start = 2
 +    else:
 +        args_start = 1
-+    
++
 +    if len(sys.argv) == args_start or (len(sys.argv) == args_start + 1 and sys.argv[args_start] in ['--all', '-a', '--batch']):
 +        # Batch mode
 +        if use_csv:
 +            print("Batch mode: Loading from combined CSV files...")
-+            
++
 +            d_csv, non_d_csv, da_csv, ds_csv = find_combined_csv_files()
-+            
++
 +            d_df = pd.DataFrame()
 +            non_d_df = pd.DataFrame()
 +            da_df = pd.DataFrame()
 +            ds_df = pd.DataFrame()
-+            
++
 +            # Track all parsed files (we'll extract from source_file column)
 +            all_files_data = {'d': [], 'non-d': [], 'da': [], 'ds': []}
-+            
++
 +            if d_csv:
 +                print(f"\nLoading 'd' data from {os.path.basename(d_csv)}:")
 +                d_df = load_from_csv(d_csv)
 +                if not d_df.empty:
 +                    all_files_data['d'] = d_df['source_file'].unique().tolist()
 +                    print(f"  Loaded {len(d_df)} successful vulnerabilities from {len(all_files_data['d'])} runs")
-+            
++
 +            if non_d_csv:
 +                print(f"\nLoading 'non-d' data from {os.path.basename(non_d_csv)}:")
 +                non_d_df = load_from_csv(non_d_csv)
 +                if not non_d_df.empty:
 +                    all_files_data['non-d'] = non_d_df['source_file'].unique().tolist()
 +                    print(f"  Loaded {len(non_d_df)} successful vulnerabilities from {len(all_files_data['non-d'])} runs")
-+            
++
 +            if da_csv:
 +                print(f"\nLoading 'da' data from {os.path.basename(da_csv)}:")
 +                da_df = load_from_csv(da_csv)
 +                if not da_df.empty:
 +                    all_files_data['da'] = da_df['source_file'].unique().tolist()
 +                    print(f"  Loaded {len(da_df)} successful vulnerabilities from {len(all_files_data['da'])} runs")
-+            
++
 +            if ds_csv:
 +                print(f"\nLoading 'ds' data from {os.path.basename(ds_csv)}:")
 +                ds_df = load_from_csv(ds_csv)
@@ -1919,40 +1920,40 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +        else:
 +            # Original batch mode: parse train-log files
 +            print("Batch mode: Processing all train-log-* files...")
-+            
++
 +            d_files, non_d_files, da_files, ds_files = find_train_log_files()
-+            
++
 +            print(f"\nFound {len(d_files)} 'd' files, {len(non_d_files)} 'non-d' files, "
 +                  f"{len(da_files)} 'da' files, and {len(ds_files)} 'ds' files")
-+            
++
 +            d_df = pd.DataFrame()
 +            non_d_df = pd.DataFrame()
 +            da_df = pd.DataFrame()
 +            ds_df = pd.DataFrame()
-+            
++
 +            # Track all parsed files (including those with no vulns)
 +            all_files_data = {'d': [], 'non-d': [], 'da': [], 'ds': []}
-+            
++
 +            if d_files:
 +                print(f"\nProcessing 'd' files:")
 +                d_df, d_all_files = parse_all_files(d_files, 'd')
 +                all_files_data['d'] = d_all_files
-+            
++
 +            if non_d_files:
 +                print(f"\nProcessing 'non-d' files:")
 +                non_d_df, non_d_all_files = parse_all_files(non_d_files, 'non-d')
 +                all_files_data['non-d'] = non_d_all_files
-+            
++
 +            if da_files:
 +                print(f"\nProcessing 'da' files:")
 +                da_df, da_all_files = parse_all_files(da_files, 'da')
 +                all_files_data['da'] = da_all_files
-+            
++
 +            if ds_files:
 +                print(f"\nProcessing 'ds' files:")
 +                ds_df, ds_all_files = parse_all_files(ds_files, 'ds')
 +                all_files_data['ds'] = ds_all_files
-+        
++
 +        # Export and generate tables (only if not using CSV mode, or if user wants to regenerate)
 +        if not use_csv:
 +            for name, df in [('d', d_df), ('non-d', non_d_df), ('da', da_df), ('ds', ds_df)]:
@@ -1971,10 +1972,10 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +                    print(f"  Average reward: {df['reward'].mean():.4f}")
 +                    print(f"  Average EpsTaken: {df['EpsTaken'].mean():.1f}")
 +                    generate_vulnerability_table(df, f'train-log-{name}_combined')
-+        
++
 +        # Check if any files were parsed at all
 +        total_files = sum(len(files) for files in all_files_data.values())
-+        
++
 +        if d_df.empty and non_d_df.empty and da_df.empty and ds_df.empty:
 +            print("\nNo successful vulnerabilities found in any files.")
 +            if total_files > 0:
@@ -1989,39 +1990,39 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +                'non-d': non_d_df
 +            }
 +            generate_combined_vulnerability_table(file_type_data, 'combined_vulnerability_stats.tex')
-+            
++
 +            # Generate vulnerability matrix (2D: runs x vulnerabilities)
 +            # Include ALL parsed files, even those with no vulns found
 +            print("\n" + "=" * 80)
 +            print("Generating vulnerability matrix...")
 +            generate_vulnerability_matrix(file_type_data, all_files_data, 'vulns_out.pkl')
-+    
++
 +    else:
 +        # Single file mode
 +        file_path = sys.argv[1]
-+        
++
 +        if len(sys.argv) >= 3:
 +            output_file = sys.argv[2]
 +        else:
 +            base_name = os.path.splitext(os.path.basename(file_path))[0]
 +            output_file = f"{base_name}_parsed.csv"
-+        
++
 +        try:
 +            print(f"Parsing {file_path}...")
 +            df = parse_train_log(file_path)
-+            
++
 +            export_to_csv(df, output_file)
-+            
++
 +            base_name = os.path.splitext(output_file)[0]
 +            generate_vulnerability_table(df, base_name)
-+            
++
 +            print("\n" + "=" * 80)
 +            print("Summary Statistics:")
 +            print(f"  Total successful vulnerabilities: {len(df)}")
 +            if not df.empty:
 +                print(f"  Average reward: {df['reward'].mean():.4f}")
 +                print(f"  Average EpsTaken: {df['EpsTaken'].mean():.1f}")
-+            
++
 +        except FileNotFoundError:
 +            print(f"Error: File '{file_path}' not found.")
 +            sys.exit(1)
@@ -2036,7 +2037,7 @@ diff -ruN Link-main/parse_train_log.py Modified-Link/parse_train_log.py
 +    main()
 diff -ruN Link-main/run_train.sh Modified-Link/run_train.sh
 --- Link-main/run_train.sh	1970-01-01 01:00:00
-+++ Modified-Link/run_train.sh	2026-01-22 19:47:12
++++ Modified-Link/run_train.sh	2026-06-18 00:38:44
 @@ -0,0 +1,63 @@
 +#!/bin/bash
 +
@@ -2103,7 +2104,7 @@ diff -ruN Link-main/run_train.sh Modified-Link/run_train.sh
 +fi
 diff -ruN Link-main/train_A2C.py Modified-Link/train_A2C.py
 --- Link-main/train_A2C.py	2022-04-28 06:55:42
-+++ Modified-Link/train_A2C.py	2026-01-22 19:47:12
++++ Modified-Link/train_A2C.py	2026-06-18 00:38:44
 @@ -4,12 +4,10 @@
  import gym
  import gym_reflected_xss
@@ -2123,12 +2124,12 @@ diff -ruN Link-main/train_A2C.py Modified-Link/train_A2C.py
 @@ -17,58 +15,87 @@
  import tensorflow as tf
  tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.ERROR)
- 
+
 -from stable_baselines.common.policies import FeedForwardPolicy, LstmPolicy
 -# Custom MLP policy of three layers of size 128 each
 -class CustomPolicy(FeedForwardPolicy):
 -    def __init__(self,*args, **kwargs):
--        super(CustomPolicy, self).__init__(*args, **kwargs, 
+-        super(CustomPolicy, self).__init__(*args, **kwargs,
 -                                           net_arch=[dict(pi=[128, 128, 128],
 -                                                          vf=[128, 128, 128])],
 -                                           feature_extraction="mlp")
@@ -2139,7 +2140,7 @@ diff -ruN Link-main/train_A2C.py Modified-Link/train_A2C.py
 -                                                    vf=[128, 128, 128])],
 -                         layer_norm=True, feature_extraction="mlp", **_kwargs)
 +from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
- 
+
  def main(argv):
      start_url = ""
      test_suite_name = ""
@@ -2147,7 +2148,7 @@ diff -ruN Link-main/train_A2C.py Modified-Link/train_A2C.py
 +    deterministic = False
 +    deterministic_state = None
 +    deterministic_action = None
- 
+
      try:
 -        opts, etc_args= getopt.getopt(argv[1:], "o:t:")
 +        opts, etc_args= getopt.getopt(argv[1:], "u:t:d:")
@@ -2155,7 +2156,7 @@ diff -ruN Link-main/train_A2C.py Modified-Link/train_A2C.py
 -        print("Use option -o")
 +        print("Use option -u")
          sys.exit(2)
--    
+-
 +
      for opt,arg in opts:
 +        print(opt)
@@ -2177,13 +2178,13 @@ diff -ruN Link-main/train_A2C.py Modified-Link/train_A2C.py
 +        if opt  == "-da":
 +            # Set deterministic action space (requires argument: true/false)
 +            deterministic_action = True"""
- 
--    
+
+-
      start_url = option
 +    learning_rate = 0.0005
 +    gamma = 0.95
- 
--    
+
+-
 -    env = gym.make("reflected-xss-v0", start_url=start_url, mode=0, log_file_name="train_log.txt")
 +    # Determine deterministic mode strings for logging
 +    if deterministic_state is None and deterministic_action is None:
@@ -2197,15 +2198,15 @@ diff -ruN Link-main/train_A2C.py Modified-Link/train_A2C.py
 +        state_mode = "ds" if (deterministic_state is not None) else "nds"
 +        action_mode = "da" if (deterministic_action is not None) else "nda"
 +        deterministic_mode = f"{state_mode}-{action_mode}"
- 
--    # create learning agent 
--    print("[*] Creating A2C model ...")  
+
+-    # create learning agent
+-    print("[*] Creating A2C model ...")
 -    policy_kwargs = dict(activation_fn=th.nn.ReLU,net_arch=[dict(pi=[128,128,128], vf=[128,128,128])])
 +    log_title = time.strftime('%Y.%m.%d-%H.%M.%S', time.localtime(time.time())) + "-" + test_suite_name +  "-" + str(timesteps) + "-A2C-learning-" + str(learning_rate) + "-gamma-" + str(gamma) + "O-" + str(deterministic_mode)
- 
+
 -    learning_rate = 0.0005
 -    gamma = 0.95
--    model = A2C(CustomPolicy, env, verbose=1,tensorboard_log="./tensorboard_log/", learning_rate=learning_rate, gamma=gamma)   
+-    model = A2C(CustomPolicy, env, verbose=1,tensorboard_log="./tensorboard_log/", learning_rate=learning_rate, gamma=gamma)
 +
 +    print(deterministic_mode)
 +    print(deterministic, deterministic_state, deterministic_action )
@@ -2226,13 +2227,14 @@ diff -ruN Link-main/train_A2C.py Modified-Link/train_A2C.py
 +    model = A2C("MlpPolicy", env, verbose=1, tensorboard_log="./tensorboard_log/",
 +                learning_rate=learning_rate, gamma=gamma, policy_kwargs=policy_kwargs)
      print("[*] Start Agent learning ...")
- 
- 
+
+
 -    log_title = time.strftime('%Y.%m.%d', time.localtime(time.time())) + "-" + test_suite_name +  "-" + str(timesteps) + "-A2C-learning-" + str(learning_rate) + "-gamma-" + str(gamma) + "O"
- 
-     model.learn(total_timesteps=timesteps , tb_log_name=log_title)
--    
+
+-    model.learn(total_timesteps=timesteps , tb_log_name=log_title)
+-
++    model.learn(total_timesteps=timesteps, tb_log_name=log_title, progress_bar=True)
 +
      model_name = "models/" + log_title + "-" + str(uuid.uuid4()) + "-model.pkl"
- 
+
      # save trained model
