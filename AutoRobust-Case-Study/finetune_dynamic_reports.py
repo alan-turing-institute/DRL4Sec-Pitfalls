@@ -1,5 +1,6 @@
 import os
 os.environ.setdefault("CUDA_VISIBLE_DEVICES", "0")  # Force single GPU usage
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 import argparse
 import csv
 import json
@@ -151,7 +152,7 @@ class DataCollator:
     """Data collator that splits long texts into chunks for classification."""
     tokenizer: AutoTokenizer
     chunk_size: int = 512
-    max_chunks_per_sample: int = 20  # Limit chunks to avoid memory issues
+    max_chunks_per_sample: int = 8  # Limit chunks to avoid memory issues
 
     def __call__(self, features: List[Dict[str, any]]):
         all_chunks = []
@@ -298,7 +299,7 @@ def train_classifier(
         args=training_args,
         train_dataset=train_hf_dataset,
         eval_dataset=eval_hf_dataset,
-        tokenizer=tokenizer,
+        processing_class=tokenizer,
         data_collator=collator,
         compute_metrics=compute_classification_metrics,
     )
@@ -428,14 +429,23 @@ CONFIG = {
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Fine-tune a model for malware classification")
     parser.add_argument("--output-dir", type=Path, default=Path("models/distilbert"), help="Output directory for model and results")
-    parser.add_argument("--batch-size", type=int, default=8, help="Training batch size per device")
+    parser.add_argument("--batch-size", type=int, default=4, help="Training batch size per device")
     parser.add_argument("--eval-batch-size", type=int, default=16, help="Evaluation batch size per device")
     parser.add_argument("--chunk-size", type=int, default=None, help="Chunk size (tokens)")
+    parser.add_argument("--max-chunks-per-sample", type=int, default=8, help="Max chunks per sample")
     parser.add_argument("--gradient-checkpointing", action="store_true", help="Enable gradient checkpointing")
     parser.add_argument("--bf16", action="store_true", help="Use bfloat16 precision")
     parser.add_argument("--fp16", action="store_true", help="Use float16 precision")
     parser.add_argument("--no-lora", action="store_true", help="Disable LoRA (full fine-tuning uses more memory)")
-    
+    parser.add_argument(
+        "--smoke-test", action="store_true",
+        help="Pipeline-only mode: subsample each split to 8 examples, "
+             "do 1 optimizer step, skip the post-training test eval. "
+             "Used by reproducibility/smoke-test.sh to confirm the script "
+             "can be imported, data loads, the model runs forward+backward, "
+             "and Trainer wires up — without doing meaningful training."
+    )
+
     return parser.parse_args()
 
 
@@ -470,6 +480,15 @@ def main():
     remaining_dataset, test_dataset = train_eval_split(full_dataset, CONFIG["data"]["test_ratio"], CONFIG["data"]["seed"])
     train_dataset, eval_dataset = train_eval_split(remaining_dataset, CONFIG["data"]["eval_ratio"], CONFIG["data"]["seed"] + 1)
 
+    if args.smoke_test:
+        # Pipe-through verification: cap every split to a tiny size so the
+        # whole train+eval cycle finishes in ~10s rather than minutes.
+        train_dataset.examples = train_dataset.examples[:8]
+        if eval_dataset is not None:
+            eval_dataset.examples = eval_dataset.examples[:4]
+        if test_dataset is not None:
+            test_dataset.examples = test_dataset.examples[:4]
+
     print(f"Train examples: {len(train_dataset)}")
     print(f"Eval examples: {len(eval_dataset) if eval_dataset else 0}")
     print(f"Test examples: {len(test_dataset) if test_dataset else 0}")
@@ -501,12 +520,16 @@ def main():
     )
 
     # Training arguments
+    smoke = bool(getattr(args, "smoke_test", False))
     training_args = TrainingArguments(
         output_dir=str(args.output_dir),
         per_device_train_batch_size=args.batch_size,
         per_device_eval_batch_size=args.eval_batch_size,
-        gradient_accumulation_steps=CONFIG["training"]["gradient_accumulation_steps"],
-        num_train_epochs=CONFIG["training"]["epochs"],
+        gradient_accumulation_steps=(1 if smoke else CONFIG["training"]["gradient_accumulation_steps"]),
+        num_train_epochs=(1 if smoke else CONFIG["training"]["epochs"]),
+        max_steps=(1 if smoke else -1),
+        save_strategy=("no" if smoke else "steps"),
+        eval_strategy=("no" if smoke else ("steps" if eval_dataset is not None else "no")),
         learning_rate=CONFIG["training"]["learning_rate"],
         weight_decay=CONFIG["training"]["weight_decay"],
         warmup_ratio=CONFIG["training"]["warmup_ratio"],
@@ -519,14 +542,12 @@ def main():
         optim="adamw_torch",
         report_to="none",
         ddp_find_unused_parameters=False,
-        load_best_model_at_end=True if eval_dataset is not None else False,
-        metric_for_best_model="f1" if eval_dataset is not None else None,
+        load_best_model_at_end=(False if smoke else (True if eval_dataset is not None else False)),
+        metric_for_best_model=(None if smoke else ("f1" if eval_dataset is not None else None)),
         greater_is_better=True,
         remove_unused_columns=False,
         label_names=["labels"],
         logging_strategy="steps",
-        eval_strategy="steps" if eval_dataset is not None else "no",
-        save_strategy="steps",
     )
 
     # Train the model
@@ -546,7 +567,7 @@ def main():
     print(f"Training complete. Model saved to {args.output_dir}")
 
     # Test model
-    if test_dataset:
+    if test_dataset and not smoke:
         print("Evaluating on test set...")
         test_results = test_classifier(
             model=model,

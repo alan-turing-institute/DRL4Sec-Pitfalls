@@ -50,11 +50,24 @@ class RLattacker(gym.Env):
         self.model_dir = Path(model_dir)
         self.data_root = Path(data_root)
 
-        # Load model & tokenizer
+        # Load model & tokenizer.
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_dir, trust_remote_code=True)
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token if self.tokenizer.eos_token else self.tokenizer.unk_token
-        self.model = AutoModelForSequenceClassification.from_pretrained(self.model_dir).to(self.device).eval()
+
+        adapter_cfg_path = self.model_dir / "adapter_config.json"
+        if adapter_cfg_path.exists():
+            from peft import PeftModel
+            with adapter_cfg_path.open() as _f:
+                _adapter_cfg = json.load(_f)
+            base = AutoModelForSequenceClassification.from_pretrained(
+                _adapter_cfg["base_model_name_or_path"], num_labels=2
+            )
+            self.model = PeftModel.from_pretrained(base, self.model_dir).to(self.device).eval()
+        else:
+            self.model = AutoModelForSequenceClassification.from_pretrained(
+                self.model_dir
+            ).to(self.device).eval()
 
         # Collect report paths
         self.report_paths = sorted(self.data_root.rglob("*.json"))

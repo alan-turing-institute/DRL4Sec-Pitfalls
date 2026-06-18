@@ -847,12 +847,24 @@ class SimplifiedCAGE:
     with faster execution speed and parallelism.
     '''
 
-    def __init__(self, num_envs, num_nodes=13, remove_bugs=False):
+    def __init__(self, num_envs, num_nodes=13, remove_bugs=False, action_order="R2B"):
 
         # basic parameters
         self.num_envs = num_envs
         self.num_nodes = num_nodes
         self.remove_bugs = remove_bugs
+
+        # Action ordering for _process_actions:
+        #   "R2B"   red moves first, then blue (original CybORG-style behaviour)
+        #   "B2R"   blue moves first, then red (Table 3 "B→R" condition)
+        #   "Mixed" per step, randomly pick one of the two
+        # Used by §8.3 D-UA deployment study (Table 3 top section).
+        valid_orders = {"R2B", "B2R", "Mixed"}
+        if action_order not in valid_orders:
+            raise ValueError(
+                f"Invalid action_order {action_order!r}; expected one of {valid_orders}"
+            )
+        self.action_order = action_order
 
         # map integer in host_alloc[valid] exes to action name
         self.action_mapping = action_mapping()
@@ -1044,17 +1056,28 @@ class SimplifiedCAGE:
     def _process_actions(
             self, state, red_action, blue_action, subnets, red_agent=None):
         '''
-        Update the internal states based on blue/red actions
+        Update the internal states based on blue/red actions.
+
+        Dispatches to the R-then-B or B-then-R helper based on
+        self.action_order. "Mixed" picks one of the two at random
+        each step (the mixed-order condition in Table 3 of the paper).
         '''
+        if self.action_order == "R2B":
+            order = "R2B"
+        elif self.action_order == "B2R":
+            order = "B2R"
+        else:  # "Mixed"
+            order = "R2B" if np.random.rand() < 0.5 else "B2R"
 
-        ############################################
-        # TODO: are the success values usable
-        # -> red success is the only important one
+        if order == "R2B":
+            return self._process_actions_r_then_b(
+                state, red_action, blue_action, subnets, red_agent)
+        return self._process_actions_b_then_r(
+            state, red_action, blue_action, subnets, red_agent)
 
-        # -> success can be cancelled out via restore
-        #   -> if restore occurs with priv
-        ############################################
-
+    def _process_actions_r_then_b(
+            self, state, red_action, blue_action, subnets, red_agent=None):
+        """Original CybORG ordering: red acts first, blue second."""
         # get next state and corresponding reward
         # add probability of failure
         red_true_state, red_reward, success, impacted, selected_exploit = update_red(
@@ -1064,7 +1087,6 @@ class SimplifiedCAGE:
             femitter_placed=self.femitter_placed,
             remove_bug=self.remove_bugs)
         self.red_success = success
-        # print(f"Mid-step red success: {self.red_success}")
         self.selected_exploit = selected_exploit
 
         impacted_after_red = impacted.copy()
@@ -1074,8 +1096,7 @@ class SimplifiedCAGE:
         self.host_exploits[
             np.arange(len(host_selected)), host_selected] = selected_exploit
 
-        # now perform blue update
-        # perform the blue action first
+        # now perform blue update on the post-red state
         true_state, blue_reward, decoys, proc, success, decoy_reset, impacted, femitter_placed = update_blue(
             state=state, updated_state=red_true_state,
             action=blue_action,
@@ -1089,7 +1110,6 @@ class SimplifiedCAGE:
         self.impacted = impacted
         self.femitter_placed = femitter_placed
 
-        # reset the decoys
         if np.any(decoy_reset):
             decoys[decoy_reset.astype(bool)] = self.default_decoys[
                 decoy_reset.astype(bool)]
@@ -1103,6 +1123,60 @@ class SimplifiedCAGE:
         blue_reward -= red_reward
 
         return true_state, red_true_state, {'Blue': blue_reward, 'Red': red_reward}, impacted_after_red
+
+    def _process_actions_b_then_r(
+            self, state, red_action, blue_action, subnets, red_agent=None):
+        """B→R ordering: blue acts first on the unmodified state, then red on
+        the blue-modified state. Used for Table 3 (D-UA) deployment study."""
+
+        # Blue first acts on the original state (updated_state == state)
+        blue_true_state, blue_reward, decoys, proc, b_success, decoy_reset, impacted, femitter_placed = update_blue(
+            state=state, updated_state=state,
+            action=blue_action,
+            decoys=self.current_decoys,
+            processes=self.current_processes,
+            proc_map=self.exploit_map,
+            impacted=self.impacted,
+            femitter_placed=self.femitter_placed
+        )
+        self.blue_success = b_success
+
+        if np.any(decoy_reset):
+            decoys[decoy_reset.astype(bool)] = self.default_decoys[
+                decoy_reset.astype(bool)]
+            def_exploits = np.tile(
+                self.default_exploits[None], (decoy_reset.shape[0], 1, 1))
+            proc[decoy_reset.astype(bool)] = def_exploits[decoy_reset.astype(bool)]
+
+        # Red second acts on the post-blue state and post-blue processes
+        true_state, red_reward, r_success, impacted, selected_exploit = update_red(
+            state=blue_true_state, action=red_action, subnet_loc=subnets,
+            processes=proc,
+            impacted=impacted,
+            femitter_placed=femitter_placed,
+            remove_bug=self.remove_bugs)
+        self.red_success = r_success
+        self.selected_exploit = selected_exploit
+
+        # update the host exploits
+        host_selected = ((red_action - 4) % self.num_nodes).astype(int)
+        self.host_exploits[
+            np.arange(len(host_selected)), host_selected] = selected_exploit
+
+        impacted_after_red = impacted.copy()
+
+        self.impacted = impacted
+        self.femitter_placed = femitter_placed
+        self.current_processes = proc
+        self.current_decoys = decoys
+
+        # impact action should also influence blue but negatively
+        blue_reward -= red_reward
+
+        # In B→R order, "after_red_state" is just the final state there is
+        # no separate post-red-pre-blue snapshot. Returning true_state keeps
+        # downstream callers (info["after_red_*"]) working consistently.
+        return true_state, true_state, {'Blue': blue_reward, 'Red': red_reward}, impacted_after_red
 
     def _process_reward(self, state, action_reward, impacted, red_action, blue_action):
         """

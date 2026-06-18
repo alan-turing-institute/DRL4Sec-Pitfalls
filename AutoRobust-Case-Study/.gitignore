@@ -1,6 +1,7 @@
 agents/
-data/
-models/
+data/goodware_dataset
+data/labels.csv
+data/malware_dataset
 results/
 __pycache__/
 *.pyc

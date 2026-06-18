@@ -24,25 +24,27 @@ pip install gymnasium numpy torch transformers stable-baselines3 pandas matplotl
 
 A CUDA-capable GPU is recommended. The environment defaults to CUDA if available.
 
-## Training the Malware Detection Model
+## Malware Detection Model
 
-Before running the RL agents, you need to train the malware detection classifier:
+The fine-tuned DistilBERT classifier this case study uses as its malware detector is **provided pre-trained at `models/distilbert/`** as a **LoRA adapter** (about 5 MB: `adapter_config.json` + `adapter_model.safetensors` + tokenizer files). You do not need to run `finetune_dynamic_reports.py` to reproduce the paper's results, the reproducibility scripts (`reproducibility/reproduce-one-seed.sh`, `reproducibility/reproduce-full.sh`) load `models/distilbert/` directly.
 
-1. Download the dataset from [Kaggle](https://www.kaggle.com/datasets/greimas/malware-and-goodware-dynamic-analysis-reports)
-2. Create and populate the data directory:
+`envs/RLattacker.py` detects the LoRA format (presence of `adapter_config.json`) and loads via `peft.PeftModel.from_pretrained`, attaching the adapter to the base model named in `adapter_config["base_model_name_or_path"]` (`distilbert-base-uncased`, fetched from the HuggingFace Hub on first use). For a plain non-adapter checkpoint the loader falls back to `AutoModelForSequenceClassification.from_pretrained` so either format works.
+
+### How the shipped classifier was produced
+
+It is a LoRA fine-tune of [`distilbert-base-uncased`](https://huggingface.co/distilbert-base-uncased) on the [Kaggle malware-and-goodware-dynamic-analysis-reports dataset](https://www.kaggle.com/datasets/greimas/malware-and-goodware-dynamic-analysis-reports), produced by `finetune_dynamic_reports.py` with the defaults in its `CONFIG` block (4 epochs, learning rate 2e-4, LoRA r=16/α=32 over `q_lin,k_lin,v_lin,out_lin`, chunk size 512, max 20 chunks per sample, 80/10/10 train/eval/test split).
+
+### Regenerating the classifier (optional)
+
+If you want to rebuild it from scratch (e.g. to verify the shipped checkpoint, or because you've changed the upstream dataset), download the Kaggle dataset into `data/` and run:
 
 ```bash
 mkdir -p data/
-# Place the dataset files in data/
-```
-
-3. Run the training script:
-
-```bash
+# Place the Kaggle dataset files in data/ (preserving its directory layout)
 python finetune_dynamic_reports.py
 ```
 
-This fine-tunes a DistilBERT model on the dynamic analysis reports and saves the trained classifier to `models/distilbert/` for use by the RL environment.
+This will overwrite `models/distilbert/`. Add `--smoke-test` for a fast pipeline-only check (8 samples, 1 optimizer step, no test eval) used by `reproducibility/smoke-test.sh`.
 
 ## Training
 

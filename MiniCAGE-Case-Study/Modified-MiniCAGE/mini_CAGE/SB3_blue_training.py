@@ -1,5 +1,5 @@
 """
-SB3_training.py — launch N PPO runs in parallel (one process each)
+SB3_training.py: launch N PPO runs in parallel (one process each)
 
 This has been adjusted for running experiments for the project, case study 1.
 Initial focus is on training variance, the effect of varying hyperparameters, and the effect of terminating episodes
@@ -30,15 +30,27 @@ from stable_baselines3.common.callbacks import BaseCallback
 # ═══════════════════════════════════════════════════════════════════════
 # Training Config
 # ═══════════════════════════════════════════════════════════════════════
-NUM_RUNS: int = 25
+NUM_RUNS: int = 20
 TOTAL_TIMESTEPS: int = 2_500_000
 
-USE_WANDB: bool = True           # flip to False to disable W&B logging
+USE_WANDB: bool = False          # flip to True to enable W&B logging
 USE_TENSORBOARD: bool = True     # if True, each run gets its own TB dir
 
 WANDB_PROJECT: str = "mini-cage-trial" # Adjust
 WANDB_ENTITY: str | None = "mini-cage_exp" # Adjust
-EXPERIMENT: str = "default"  # Choose from HP_PRESETS below
+# EXPERIMENT can be overridden via the EXPERIMENT env var (used by
+# reproduce-*.sh to loop over the four HP configurations).
+EXPERIMENT: str = os.environ.get("EXPERIMENT", "default")  # one of HP_PRESETS below
+# RED_POLICY can be overridden via the RED_POLICY env var. Used by the §8.3
+# deployment study to train blue against different red attackers
+# (bline / meander / mixed). The chosen policy is baked into EXPERIMENT_DIR
+# so different reds do not overwrite each other's checkpoints.
+RED_POLICY: str = os.environ.get("RED_POLICY", "bline")
+# ACTION_ORDER can be overridden via the ACTION_ORDER env var. Used by the
+# §8.3 D-UA deployment study (Table 3 top section): "R2B" (default), "B2R",
+# or "Mixed". Baked into EXPERIMENT_DIR so different orders do not
+# overwrite each other's checkpoints.
+ACTION_ORDER: str = os.environ.get("ACTION_ORDER", "R2B")
 
 CHECKPOINTS = [50_000, 100_000, 250_000, 500_000, 750_000, 1_000_000, 2_000_000, 2_500_000]
 
@@ -73,15 +85,18 @@ LEARNING_RATE = HP_PRESETS[EXPERIMENT]["LEARNING_RATE"]
 GAMMA = HP_PRESETS[EXPERIMENT]["GAMMA"]
 CLIP_RANGE = HP_PRESETS[EXPERIMENT]["CLIP_RANGE"]
 
-GROUP_NAME: str = f"SB3_PPO_{EXPERIMENT}_{TOTAL_TIMESTEPS}"
+GROUP_NAME: str = f"SB3_PPO_{EXPERIMENT}_{RED_POLICY}_{ACTION_ORDER}_{TOTAL_TIMESTEPS}"
 
 BASE_DIR: Path = Path("ppo_models")
-EXPERIMENT_DIR: Path = BASE_DIR / f"SB3_PPO_{EXPERIMENT}"
+EXPERIMENT_DIR: Path = BASE_DIR / f"SB3_PPO_{EXPERIMENT}_{RED_POLICY}_{ACTION_ORDER}"
 EXPERIMENT_DIR.mkdir(parents=True, exist_ok=True)
 
 def make_env(seed: Optional[int] = None):
     """Factory that returns a **monitored** MiniCageBlue env."""
-    env = MiniCageBlue(red_policy="bline", max_steps=100, remove_bugs=True)
+    env = MiniCageBlue(
+        red_policy=RED_POLICY, max_steps=100, remove_bugs=True,
+        action_order=ACTION_ORDER,
+    )
     if seed is not None:
         env.action_space.seed(seed)
         env.observation_space.seed(seed)
@@ -120,7 +135,7 @@ class CheckpointSaver(BaseCallback):
 def train_worker(idx: int):
     """Launch a single PPO run (executed inside its own process)."""
     time_tag = datetime.now().strftime("%Y%m%d_%H%M%S")
-    run_name = f"ppo_mini_cage_bline_{time_tag}_{idx}"
+    run_name = f"ppo_mini_cage_{RED_POLICY}_{ACTION_ORDER}_{time_tag}_{idx}"
 
     # Make environment
     env = DummyVecEnv([lambda: make_env(seed=idx)])
@@ -196,6 +211,7 @@ def train_worker(idx: int):
         total_timesteps=TOTAL_TIMESTEPS,
         callback=callback_list,
         log_interval=10,
+        progress_bar=True,
     )
 
     # Final save (per-agent dir as an end-of-training snapshot)
@@ -216,7 +232,7 @@ if __name__ == "__main__":
     except RuntimeError:
         pass
 
-    START_IDX = 2
+    START_IDX = 1
     processes: list[Process] = []
     for idx in range(START_IDX, START_IDX + NUM_RUNS):
         p = Process(target=train_worker, args=(idx,), daemon=False)

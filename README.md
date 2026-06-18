@@ -68,6 +68,17 @@ Extension of the MiniCAGE network defense environment. Used for two sets of expe
 
 ***
 
+## Reproducibility
+
+Full instructions and automated scripts for reproducing all experiments are available in the [`reproducibility/`](reproducibility/REPRODUCIBILITY.md) directory:
+
+- **`reproduce-one-seed.sh`**: Single-seed run per case study for quick setup verification
+- **`reproduce-full.sh`**: Full reproduction matching the paper (20 seeds/agents per configuration)
+
+See [REPRODUCIBILITY.md](reproducibility/REPRODUCIBILITY.md) for detailed prerequisites and per-case-study instructions.
+
+***
+
 ## Repository Structure
 
 ```
@@ -108,6 +119,10 @@ DRL4Sec-Pitfalls/
 ├── SoK-Review-Information/    # Paper review methodology
 │   ├── Review-Information.md  # Review process details
 │   └── DRL4Sec-Pitfalls.png   # Pitfall prevalence figure
+├── reproducibility/           # Reproduction scripts and guide
+│   ├── REPRODUCIBILITY.md     # Full reproduction instructions
+│   ├── reproduce-full.sh      # Complete reproduction (20 seeds)
+│   └── reproduce-one-seed.sh  # Quick verification (1 seed)
 └── README.md
 ```
 

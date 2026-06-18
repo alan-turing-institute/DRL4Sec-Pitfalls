@@ -10,6 +10,35 @@ from mini_CAGE.test_agent import Meander_minimal
 from mini_CAGE.red_bline_agent import B_line_minimal
 
 
+class Mixed_minimal:
+    """
+    Mixed red attacker: at every reset (episode boundary) randomly picks
+    between B-line and Meander. The chosen sub-agent persists for the full
+    episode so within-episode behaviour stays internally consistent.
+
+    All non-overridden attribute access is delegated to the active sub-agent,
+    so the wrapper is transparent to callers (e.g. SimplifiedCAGE._process_actions)
+    that inspect red_agent state.
+    """
+
+    def __init__(self):
+        self._bline = B_line_minimal()
+        self._meander = Meander_minimal()
+        self._current = self._bline
+
+    def reset(self):
+        self._current = np.random.choice([self._bline, self._meander])
+        # Meander_minimal has no reset(); only call it if present.
+        if hasattr(self._current, "reset"):
+            self._current.reset()
+
+    def get_action(self, obs):
+        return self._current.get_action(obs)
+
+    def __getattr__(self, name):
+        return getattr(self._current, name)
+
+
 def make_red_agent(name: str, sim: SimplifiedCAGE):
     """
     Return an *already-constructed* red agent that exposes
@@ -19,6 +48,8 @@ def make_red_agent(name: str, sim: SimplifiedCAGE):
         return B_line_minimal()
     if name.lower() in {"meander", "meander_minimal"}:
         return Meander_minimal()
+    if name.lower() in {"mixed", "mixed_minimal"}:
+        return Mixed_minimal()
     raise ValueError(f"Unknown red agent '{name}'")
 
 
@@ -35,10 +66,13 @@ class MiniCageBlue(gym.Env):
             red_policy: str = "bline",
             remove_bugs: bool = True,
             max_steps: int = 100,
+            action_order: str = "R2B",
     ):
         super().__init__()
 
-        self.sim = SimplifiedCAGE(num_envs=1, remove_bugs=remove_bugs)
+        self.sim = SimplifiedCAGE(
+            num_envs=1, remove_bugs=remove_bugs, action_order=action_order
+        )
 
         # action / observation spaces
         self.role = "Blue"
@@ -65,8 +99,9 @@ class MiniCageBlue(gym.Env):
     def reset(self, *, seed=None, options=None):
         super().reset(seed=seed)
 
-        # reset the Red agent’s internal state
-        self.red_agent.reset()
+        # reset the Red agent's internal state (Meander_minimal has no reset())
+        if hasattr(self.red_agent, "reset"):
+            self.red_agent.reset()
 
         self.steps_done = 0
 

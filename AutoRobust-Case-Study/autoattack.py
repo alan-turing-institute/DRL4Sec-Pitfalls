@@ -84,9 +84,8 @@ def train_agent(rew, steps, pomdp, lr, arch, ts, n_agents=5, base_seed=42):
         model.learn(total_timesteps=int(ts), callback=monitor_callback, progress_bar=True)
         
         print("\n\n=== Training Complete ===")
-        
-        # Collect results from the environment
-        res = env.results()
+
+        res = env.unwrapped.results()
         mean_score = res[0]
         episodes = res[3]
         

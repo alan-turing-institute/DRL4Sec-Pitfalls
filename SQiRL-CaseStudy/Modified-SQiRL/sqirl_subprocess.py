@@ -6,6 +6,7 @@ import struct
 import sys
 import optparse
 import time
+from tqdm import tqdm
 from Environment.Environment import Game_Type, SQLI_Environment
 from Manual_Agent.Agent_Random import Agent_Random
 from RL_Agent.Agents.DQN_Agent.Agent_2 import Agent_2
@@ -239,7 +240,7 @@ def main():
 
         seen_pairs = {}
         # playing loop
-        for current_episode in range(no_episodes):
+        for current_episode in tqdm(range(no_episodes), desc=f"agent {agent_unique_id} episodes", unit="ep"):
 
             sql_statment_file = open(os.path.join(log_location, f"sql_statment_{agent_unique_id}.stats"), "a")
             sql_statment_file.write(f"---------------------ep{current_episode}-----------------\n")

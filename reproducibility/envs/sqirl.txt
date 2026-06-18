@@ -1,0 +1,25 @@
+# SQiRL case study (Section 7.4)
+# venv: .venvs/sqirl  (Python 3.9)
+beautifulsoup4==4.11.1
+matplotlib==3.5.3
+nltk==3.7
+numpy==1.22.4
+playwright==1.25.1
+PyPika==0.48.9
+regex==2022.4.24
+requests==2.26.0
+requests_html==0.10.0
+fake_useragent==0.1.11
+lxml
+lxml_html_clean
+scikit_learn==1.1.2
+sql_metadata==2.6.0
+sqlparse==0.4.2
+torch==1.13.1
+tqdm
+# pandas + scipy required by SQiRL's own analyze_results.py.
+# jinja2 is a pandas optional dep needed for DataFrame.to_latex() on
+# pandas 2.x (used to build results_table.tex).
+pandas
+scipy
+jinja2

@@ -94,7 +94,7 @@ def main(argv):
 
 
 
-    model.learn(total_timesteps=timesteps , tb_log_name=log_title)
+    model.learn(total_timesteps=timesteps, tb_log_name=log_title, progress_bar=True)
 
     model_name = "models/" + log_title + "-" + str(uuid.uuid4()) + "-model.pkl"
 
