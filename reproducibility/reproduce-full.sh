@@ -96,8 +96,8 @@ python autoattack.py --reward 1 --timesteps 100000 --n-agents 20 --base-seed 42
 echo "[AutoRobust] Training POMDP agents (20 seeds)..."
 python autoattack.py --reward 1 --timesteps 100000 --pomdp --n-agents 20 --base-seed 42
 
-echo "[AutoRobust] Evaluating (test_agent() runs MDP + POMDP + Random in one call)..."
-python autoattack.py --test --reward 1 --n-runs 20 --offset 200
+echo "[AutoRobust] Evaluating 20 agents (test_agent() runs MDP + POMDP + Random in one call)..."
+python autoattack.py --test --reward 1 --n-runs 20 --offset 200 --n-agents 20 --base-seed 42
 
 echo "[AutoRobust] Done."
 deactivate
