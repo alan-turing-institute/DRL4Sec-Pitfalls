@@ -259,21 +259,32 @@ pass "venv imports work"
 cd "$REPO_ROOT/SQiRL-CaseStudy/Modified-SQiRL/SQLiMicrobenchmark"
 docker compose up -d >"$LOG_DIR/sqirl-docker-up.log" 2>&1
 pass "SQLiMicrobenchmark stack up"
+cd ..
 
-echo "    ... waiting up to 90s for php-apache + mysql to come up"
+
+echo "    ... waiting up to 90s for php-apache + MySQL general_log"
+SQIRL_LOG="$PWD/SQLiMicrobenchmark/mysql/general.log"
+sqirl_ready=0
+last_code=000
 for i in $(seq 1 45); do
-    code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/training.php || echo 000)
-    if [ "$code" = "200" ]; then
-        pass "training endpoint reachable (HTTP $code)"
-        break
+    last_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/training.php || echo 000)
+    if [ "$last_code" = "200" ]; then
+        : > "$SQIRL_LOG" 2>/dev/null || true
+        curl -s -o /dev/null "http://localhost:8000/functions_external/sqli1.php?id=ping_$$" || true
+        sleep 1
+        if grep -qE 'SELECT|select' "$SQIRL_LOG" 2>/dev/null; then
+            pass "services ready (php-apache HTTP 200 + MySQL general_log writing)"
+            sqirl_ready=1
+            break
+        fi
     fi
     sleep 2
-    if [ "$i" = "45" ]; then
-        echo "FAIL: training.php did not respond within 90s (last code: $code)" >&2
-        exit 1
-    fi
 done
-cd ..
+if [ "$sqirl_ready" != "1" ]; then
+    echo "FAIL: SQiRL services not ready within 90s (last training.php code: $last_code)." >&2
+    echo "      See $LOG_DIR/sqirl-docker-up.log and 'docker compose ps' in SQLiMicrobenchmark/." >&2
+    exit 1
+fi
 
 # Minimum-viable: sqirl.py loops until win_criteria wins OR loss_criteria
 # losses are reached. Setting them to 1/3 means the loop exits after at
