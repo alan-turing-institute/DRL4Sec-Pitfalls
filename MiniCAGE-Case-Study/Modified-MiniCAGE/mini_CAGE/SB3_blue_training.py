@@ -56,22 +56,22 @@ CHECKPOINTS = [50_000, 100_000, 250_000, 500_000, 750_000, 1_000_000, 2_000_000,
 
 HP_PRESETS = {
     "default": {
-        "LEARNING_RATE": 0.002,
+        "LEARNING_RATE": 0.0003,
         "GAMMA": 0.99,
         "CLIP_RANGE": 0.2,
     },
     "alt_alpha": {
-        "LEARNING_RATE": 0.02,
+        "LEARNING_RATE": 0.003,
         "GAMMA": 0.99,
         "CLIP_RANGE": 0.2,
     },
     "alt_eps": {
-        "LEARNING_RATE": 0.002,
+        "LEARNING_RATE": 0.0003,
         "GAMMA": 0.99,
-        "CLIP_RANGE": 1,  # essentially no clipping, super weak
+        "CLIP_RANGE": 0.05,
     },
     "alt_gamma": {
-        "LEARNING_RATE": 0.002,
+        "LEARNING_RATE": 0.0003,
         "GAMMA": 0.1,
         "CLIP_RANGE": 0.2,
     },

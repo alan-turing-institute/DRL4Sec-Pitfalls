@@ -29746,22 +29746,22 @@ diff -ruN CybORG_plus_plus-main/mini_CAGE/SB3_blue_training.py Modified-MiniCAGE
 -SAVE_DIR: Path = Path("ppo_models") / GROUP_NAME
 +HP_PRESETS = {
 +    "default": {
-+        "LEARNING_RATE": 0.002,
++        "LEARNING_RATE": 0.0003,
 +        "GAMMA": 0.99,
 +        "CLIP_RANGE": 0.2,
 +    },
 +    "alt_alpha": {
-+        "LEARNING_RATE": 0.02,
++        "LEARNING_RATE": 0.003,
 +        "GAMMA": 0.99,
 +        "CLIP_RANGE": 0.2,
 +    },
 +    "alt_eps": {
-+        "LEARNING_RATE": 0.002,
++        "LEARNING_RATE": 0.0003,
 +        "GAMMA": 0.99,
-+        "CLIP_RANGE": 1,  # essentially no clipping, super weak
++        "CLIP_RANGE": 0.05,
 +    },
 +    "alt_gamma": {
-+        "LEARNING_RATE": 0.002,
++        "LEARNING_RATE": 0.0003,
 +        "GAMMA": 0.1,
 +        "CLIP_RANGE": 0.2,
 +    },

@@ -69,10 +69,10 @@ The four hyperparameter presets correspond to the configurations in Figure 2 of 
 
 | Preset | Learning Rate | Gamma | Clip Range | Paper label |
 |---|---|---|---|---|
-| `default` | 0.002 | 0.99 | 0.2 | Default HPs |
-| `alt_alpha` | 0.02 | 0.99 | 0.2 | Alt Learning Rate |
-| `alt_gamma` | 0.002 | 0.1 | 0.2 | Alt Discount Factor |
-| `alt_eps` | 0.002 | 0.99 | 1.0 | Alt Clipping |
+| `default` | 0.0003 | 0.99 | 0.2 | Default HPs |
+| `alt_alpha` | 0.003 | 0.99 | 0.2 | Alt Learning Rate |
+| `alt_gamma` | 0.0003 | 0.1 | 0.2 | Alt Discount Factor |
+| `alt_eps` | 0.0003 | 0.99 | 0.05 | Alt Clipping |
 
 Run the script once per preset:
 
