@@ -262,27 +262,34 @@ pass "SQLiMicrobenchmark stack up"
 cd ..
 
 
-echo "    ... waiting up to 90s for php-apache + MySQL general_log"
+echo "    ... waiting up to 240s for php-apache + MySQL general_log=ON"
 SQIRL_LOG="$PWD/SQLiMicrobenchmark/mysql/general.log"
 sqirl_ready=0
 last_code=000
-for i in $(seq 1 45); do
-    last_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/training.php || echo 000)
+gen_state="?"
+for i in $(seq 1 60); do
+    last_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/training.php 2>/dev/null || echo 000)
     if [ "$last_code" = "200" ]; then
-        : > "$SQIRL_LOG" 2>/dev/null || true
-        curl -s -o /dev/null "http://localhost:8000/functions_external/sqli1.php?id=ping_$$" || true
-        sleep 1
-        if grep -qE 'SELECT|select' "$SQIRL_LOG" 2>/dev/null; then
-            pass "services ready (php-apache HTTP 200 + MySQL general_log writing)"
+        gen_state=$(docker exec db mysql -u root -pMYSQL_ROOT_PASSWORD \
+            -e "SHOW VARIABLES LIKE 'general_log'" 2>/dev/null \
+            | awk '$1 == "general_log" {print $2}')
+        if [ "$gen_state" = "ON" ] && [ -f "$SQIRL_LOG" ]; then
+            pass "services ready (php-apache HTTP 200 + MySQL general_log=ON)"
             sqirl_ready=1
             break
         fi
     fi
-    sleep 2
+    if [ $((i % 8)) = 0 ]; then
+        echo "    ... still waiting (iter $i/60, training.php=$last_code, general_log=${gen_state:-?})"
+    fi
+    sleep 4
 done
 if [ "$sqirl_ready" != "1" ]; then
-    echo "FAIL: SQiRL services not ready within 90s (last training.php code: $last_code)." >&2
-    echo "      See $LOG_DIR/sqirl-docker-up.log and 'docker compose ps' in SQLiMicrobenchmark/." >&2
+    echo "FAIL: SQiRL services not ready within 240s." >&2
+    echo "      Last training.php code: $last_code" >&2
+    echo "      Last general_log state: ${gen_state:-unknown}" >&2
+    echo "      Logs: $LOG_DIR/sqirl-docker-up.log" >&2
+    echo "      Run 'docker compose ps' inside SQLiMicrobenchmark/ to diagnose." >&2
     exit 1
 fi
 

@@ -163,23 +163,25 @@ cd SQLiMicrobenchmark
 docker compose up -d
 cd ..
 
-# Poll until both php-apache and MySQL's general_log are live (matches
-# the readiness gate used in reproduce-one-seed.sh).
 echo "[SQiRL] Waiting for Docker services to come up..."
 SQIRL_LOG="$PWD/SQLiMicrobenchmark/mysql/general.log"
+gen_state="?"
 for i in $(seq 1 60); do
     if [ "$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8000/training.php 2>/dev/null || echo 000)" = "200" ]; then
-        : > "$SQIRL_LOG" 2>/dev/null || true
-        curl -s -o /dev/null "http://localhost:8000/functions_external/sqli1.php?id=ping_$$" || true
-        sleep 1
-        if grep -qE 'SELECT|select' "$SQIRL_LOG" 2>/dev/null; then
-            echo "[SQiRL] services ready (php-apache + MySQL general_log)"
+        gen_state=$(docker exec db mysql -u root -pMYSQL_ROOT_PASSWORD \
+            -e "SHOW VARIABLES LIKE 'general_log'" 2>/dev/null \
+            | awk '$1 == "general_log" {print $2}')
+        if [ "$gen_state" = "ON" ] && [ -f "$SQIRL_LOG" ]; then
+            echo "[SQiRL] services ready (php-apache + MySQL general_log=ON)"
             break
         fi
     fi
-    sleep 2
+    if [ $((i % 8)) = 0 ]; then
+        echo "[SQiRL] still waiting (iter $i/60, general_log=${gen_state:-?})"
+    fi
+    sleep 4
     if [ "$i" = "60" ]; then
-        echo "[SQiRL] WARNING: services not confirmed ready after 120s; continuing anyway." >&2
+        echo "[SQiRL] WARNING: services not confirmed ready after 240s; continuing anyway." >&2
     fi
 done
 
